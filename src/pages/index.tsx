@@ -1,91 +1,356 @@
-import { useEffect, useState } from "react"
+import React, { useEffect, useState } from 'react'
 import { IBM_Plex_Sans } from 'next/font/google'
-import Delegate from "./delegate"
+import Image from 'next/image'
+import { createPublicClient, createWalletClient, http, custom, PublicClient, WalletClient, Address, Hash, Hex, parseAbi, parseUnits, parseEther } from 'viem';
+import { mainnet } from 'viem/chains'
+import { switchChain } from 'viem/actions'
+import { metaDelegate, DelegateToken, getBalance } from "../delegate"
+import { formatEther } from 'viem';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { X } from 'lucide-react';
 
 const ibmPlexSans = IBM_Plex_Sans({
   subsets: ['latin'],
-  weight: ['100', '200', '300', '400', '500', '600', '700'],
+  weight: ['200', '300', '400', '500', '600', '700'],
 })
 
-const AnimatedBackground = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" className="absolute inset-0 w-full h-full">
-    <defs>
-      <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="0%">
-        <stop offset="0%" style={{ stopColor: '#69ABB9' }}/>
-        <stop offset="50%" style={{ stopColor: '#706C9A' }}/>
-        <stop offset="100%" style={{ stopColor: '#602366' }}/>
-        <animateTransform
-          attributeName="gradientTransform"
-          type="rotate"
-          from="0 0.5 0.5"
-          to="360 0.5 0.5"
-          dur="30s"
-          repeatCount="indefinite"
-          calcMode="linear"
-          keySplines="0.25 0.1 0.25 1"
-        />
-      </linearGradient>
-    </defs>
-    <rect width="100%" height="100%" fill="url(#grad)" />
-  </svg>
+const bgImageLink = "https://firebasestorage.googleapis.com/v0/b/ucai-d6677.appspot.com/o/aavebg.png?alt=media&token=66c91456-3914-4f91-95ab-5aa727448ec7";
+
+type TabButtonProps = {
+  label: string;
+  isActive: boolean;
+  onClick: () => void;
+};
+
+const TabButton = ({ label, isActive, onClick }: TabButtonProps) => (
+  <button
+    className={`px-2 py-1 text-[15px] ${ibmPlexSans.className} ${
+      isActive
+        ? 'text-white font-light'
+        : 'text-white/70 hover:text-white font-extralight'
+    }`}
+    onClick={onClick}
+  >
+    {label}
+  </button>
 )
 
-export default function BackgroundWithOverlay() {
-
-
+const Title = ({ activeTab }: {activeTab: string}) => {
+  let content = "SaucyBlock"
+  
   return (
-    <div className="relative min-h-screen w-full">
-      <AnimatedBackground />
-      <div 
-        className="absolute inset-0 w-full h-full bg-[rgba(178,178,178,0.10)] backdrop-blur-[23.5px] flex pl-30"
-      >
-        <TopComponent />
-        <Delegate />
-      </div>
+    <div className={`w-full md:w-[525px] text-white ${ibmPlexSans.className} text-[60px] md:text-[110px] font-extralight leading-none tracking-[-3px] md:tracking-[-6.6px]`} style={{fontWeight: 100, textShadow:" 0px 4px 55px #FFF"}}>
+      {content}
     </div>
   )
 }
 
+const DetailTexts = () => {
+  return (
+    <div className={`w-full md:w-[474px] text-white/70 ${ibmPlexSans.className} text-[11px] font-light leading-[16px] mb-6`}>
+      Available as a browser extension and as a mobile app, MetaMask equips you with a key vault, secure login, token wallet, and token exchange—Available as a browser extension and as a mobile app, MetaMask equips you with a key vault, secure login, token wallet, and token exchange—
+    </div>
+  )
+}
 
-function TopComponent() {
-  const [currentMode, changeMode] = useState(1)
-
-  useEffect(() => {
-    setTimeout(() => {
-      console.log("Misw",currentMode)
-      const newMode = currentMode % 3
-      changeMode(newMode)
-    },2000)
-  }, [])
+const DelegateButton = () => {
+  const handleClick = () => {
+    console.log("Delegate button clicked");
+    // ここに実際のデリゲート処理を追加
+  };
 
   return (
-    <div className="flex flex-col justify-center h-screen w-1/2 pl-40 pb-10">
-      <nav className="mb-2 flex space-x-6">
-        {['about', 'AAVE', 'aAAVE', 'stkAAVE'].map((item, index) => (
+    <button
+      onClick={handleClick}
+      className={`w-full md:w-[222.902px] h-[45px] rounded-[15px] bg-[rgba(22,22,22,0.20)] flex items-center justify-center ${ibmPlexSans.className}`}
+    >
+      <span className={`text-white text-[12px] font-light ${ibmPlexSans.className}`} >
+        👻 delegateALL
+      </span>
+    </button>
+  )
+}
+
+
+export const DelegateModal = ({ isOpen, onClose, onConfirm, isProcessing }: { isOpen: boolean, onClose: () => void, onConfirm: () => void, isProcessing: boolean }) => {
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[425px] rounded-2xl h-[500px] overflow-y-auto fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col justify-between">
+        <div>
           <button
-            key={item + index}
-            className={`text-white text-center ${ibmPlexSans.className} text-xl font-extralight ${
-              index === 0 ? '' : 'opacity-50'
-            }`}
+            onClick={onClose}
+            className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
           >
-            {item}
+            <X className="h-4 w-4 text-black" />
+            <span className="sr-only">Close</span>
           </button>
+          <DialogHeader>
+            <DialogTitle>Confirm Delegation</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to proceed with the delegation?
+            </DialogDescription>
+          </DialogHeader>
+        </div>
+        
+        <div className="flex justify-center items-center flex-grow">
+          <Image src="/cute_aave.png" alt="Cute AAVE" width={300} height={300} />
+        </div>
+        
+        <DialogFooter className="">
+          {isProcessing ? (
+            <div className="flex items-center justify-center w-full h-[40px] bg-[#2B2D3C] text-[#2B2D3C] rounded">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+              <p className="ml-2">Processing delegation...</p>
+            </div>
+          ) : (
+            <Button 
+              className="border-black-300 border bg-[#2B2D3C] text-white w-full h-[40px] hover:bg-black hover:text-white" 
+              onClick={onConfirm}
+            >
+              delegate to saucyblock!!!
+            </Button>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+function AboutUs() {
+  const [activeTab, setActiveTab] = useState('about')
+
+  return (
+    <div className="w-full md:w-[549px] flex flex-col">
+      <div className="w-full md:w-[200px] h-[40px] flex justify-between items-center mb-4 overflow-x-auto md:overflow-x-visible">
+        {['about', 'AAVE', 'aAAVE', 'stkAAVE'].map((tab) => (
+          <TabButton
+            key={tab}
+            label={tab}
+            isActive={activeTab === tab}
+            onClick={() => setActiveTab(tab)}
+          />
         ))}
-      </nav>
-      
-      <h1 className={`${ibmPlexSans.className} text-white text-[150px] font-extralight mb-2`} >
-        SaucyBlock 
-      </h1>
-      
-      <p className={`${ibmPlexSans.className} text-[#BFBFBF] text-xs font-light leading-4 w-[615px] mb-5`}>
-        Available as a browser extension and as a mobile app, MetaMask equips you with a key vault, 
-        secure login, token wallet, and token exchange—Available as a browser extension and as a mobile app, 
-        MetaMask equips you with a key vault, secure login, token wallet, and token exchange—
-      </p>
-      
-      <button className="w-[222.902px] h-[55px] rounded-[15px] bg-[rgba(22,22,22,0.20)] text-white font-['IBM_Plex_Sans'] text-sm flex items-center justify-center">
-        <span className={`${ibmPlexSans.className} font-bold mr-2`}>👻</span> delegate ALL you have
-      </button>
+      </div>
+      <Title activeTab={activeTab} />
+      <DetailTexts />
+      <DelegateButton />
+    </div>
+  )
+}
+
+type TokenInfoProps = {
+  iconUrl: string;
+  tokenName: string;
+  buttonText: string;
+  delegateToken: string;
+  balance: () => Promise<number>;
+  delegated: string;
+  handleDelegate: () => Promise<void>;
+};
+
+function Token({ iconUrl, tokenName, buttonText, delegateToken, balance, delegated, handleDelegate }: TokenInfoProps) {
+  const [tokenBalance, setTokenBalance] = useState<number | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  useEffect(() => {
+    const fetchBalance = async () => {
+      const tokenBalance = await balance();
+      setTokenBalance(tokenBalance);
+    };
+    fetchBalance();
+  }, [balance]);
+
+  const onDelegateClick = () => {
+    setIsModalOpen(true);
+  };
+
+  const onConfirmDelegate = async () => {
+    setIsProcessing(true);
+    try {
+      await handleDelegate();
+      // ここでdelegateの成功メッセージを表示するなどの処理を追加できます
+    } catch (error) {
+      console.error("Delegation failed:", error);
+      // エラーメッセージを表示するなどのエラーハンドリングを追加できます
+    } finally {
+      setIsProcessing(false);
+      setIsModalOpen(false);
+    }
+  };
+
+  return (
+    <div className={`text-white p-4 md:p-6 rounded-2xl w-full md:w-[560px] flex flex-col justify-between ${ibmPlexSans.className}`}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center">
+          <Image
+            src={iconUrl}
+            alt={`${tokenName} Logo`}
+            width={40}
+            height={40}
+            className="rounded-full mr-3 md:mr-6"
+          />
+          <h1 className="text-[30px] md:text-[50px] font-extralight tracking-[-2px] md:tracking-[-3.6px]">{tokenName}</h1>
+        </div>
+        <button onClick={onDelegateClick} className="w-[120px] md:w-[147px] h-[35px] md:h-[45px] rounded-[15px] bg-[rgba(22,22,22,0.20)] flex items-center justify-center">
+          <span className="h-[33px] flex items-center opacity-[70%] text-white text-[10px] md:text-[12px] font-light">
+            {buttonText}
+          </span>
+        </button>
+      </div>
+      <div className="flex flex-col md:flex-row md:space-x-8 text-sm ml-[48px] mt-2 md:mt-0">
+        <p className={`${ibmPlexSans.className} font-white-20 text-[10px]`}>
+          <span className={`${ibmPlexSans.className} font-white-20 opacity-[50%] text-[10px]`}>your balance:</span> {tokenBalance !== null ? formatEther(BigInt(tokenBalance)) : 'Loading...'}
+        </p>
+        <p className={`${ibmPlexSans.className} font-white-20  text-[10px] mt-1 md:mt-0`}>
+          <span className={`${ibmPlexSans.className} font-white opacity-[50%] text-[10px]`}>total delegated to us:</span> {delegated}
+        </p>
+      </div>
+      <DelegateModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onConfirm={onConfirmDelegate}
+        isProcessing={isProcessing}
+      />
+    </div>
+  );
+}
+
+function Tokens({ wallet, ownerAddress }: { wallet: WalletClient | null, ownerAddress: string | null }) {
+
+  const tokenData: any[] = [
+    {
+      iconUrl: "/aave.png",
+      tokenName: "AAVE",
+      buttonText: "delegate AAVE",
+      delegateToken: "AAVE",
+      balance: "10000",
+      delegated: "10000",
+      address: "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9"
+    },
+    {
+      iconUrl: "/aAAVE.png",
+      tokenName: "stkAAVE",
+      buttonText: "delegate stkAAVE",
+      delegateToken: "stkAAVE",
+      balance: "10000",
+      delegated: "10000",
+      address: "0x4da27a545c0c5B758a6BA100e3a049001de870f5"
+    },
+    {
+      iconUrl: "/aave.png",
+      tokenName: "aAAVE",
+      buttonText: "delegate aAAVE",
+      delegateToken: "aAAVE",
+      balance: "10000",
+      delegated: "10000",
+      address: "0xA700b4eB416Be35b2911fd5Dee80678ff64fF6C9"
+    }
+  ]
+
+  const handleDelegate = async (token: DelegateToken) => {
+    console.log("handleDelegate:::: ");
+    const hash = await metaDelegate(token, wallet);
+    console.log(hash);
+    console.log("ownerAddress", ownerAddress);
+  }
+
+  return (
+    <div className="w-full md:w-[548px] flex flex-col justify-between space-y-4 md:space-y-0">
+      {tokenData.map((token, index) => (
+       <Token key={index} {...token} balance={async() => ownerAddress ? getBalance(token.address, ownerAddress) : 0} handleDelegate={async () => await handleDelegate(token.address)}/>
+      ))}
+    </div>
+  )
+}
+
+const AddressDisplay = ({ ensName, address }: { ensName: string | null, address: string | null }) => {
+  const displayText = ensName || (address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Not Connected');
+  const isConnected = Boolean(ensName || address);
+  
+  return (
+    <div className={`absolute top-4 right-4 text-white ${ibmPlexSans.className} text-sm text-[10px] font-extralight bg-black bg-opacity-50 px-3 py-1 rounded-[10px] flex items-center`}>
+      <span className={`w-2 h-2 rounded-full mr-2 ${isConnected ? 'bg-green-400' : 'bg-red-500'}`}></span>
+      {displayText}
+    </div>
+  );
+};
+
+export default function AppLayout() {
+  const [isCorrectChain, setIsCorrectChain] = useState(false);
+  const [address, setAddress] = useState<Address | null>(null);
+  const [ensName, setEnsName] = useState<string | null>(null);
+  const [publicClient, setPublicClient] = useState<PublicClient | null>(null);
+  const [wallet, setWallet] = useState<WalletClient | null>(null);
+
+
+  useEffect(() => {
+    
+    if (!((window as any).ethereum)) return;
+
+    const publicClient = createPublicClient({
+      chain: mainnet,
+      transport: http()
+    });
+    setPublicClient(publicClient);
+
+    const wallet = createWalletClient({
+      chain: mainnet,
+      transport: custom((window as any).ethereum)
+    });
+    setWallet(wallet);
+
+    async function setupWallet() {
+      try {
+        const chainId = await wallet.getChainId();
+        console.log("chainId", chainId);
+        if (chainId !== mainnet.id) {
+          await switchChain(wallet, { id: mainnet.id });
+        }
+
+        setIsCorrectChain(true);
+
+        const [account] = await wallet.requestAddresses();
+        setAddress(account);
+  
+        const name = await publicClient.getEnsName({ address: account });
+        setEnsName(name);
+
+        console.log("Connected address:", account);
+        console.log("ENS name:", name);
+      } catch (error) {
+        console.error("Error setting up wallet:", error);
+        setIsCorrectChain(false);
+      }
+    }
+
+    setupWallet();
+  }, []);
+
+  return (
+    <div className="relative min-h-screen w-full overflow-hidden">
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: `url(${bgImageLink})`
+        }}
+      />
+      <AddressDisplay ensName={ensName} address={address} />
+      <div className="relative z-10 flex items-center justify-center min-h-screen w-full p-4 md:p-0">
+        <div className="container w-full md:w-[1153px] md:h-[510px] mb-[20px]">
+          <div className="flex flex-col md:flex-row h-full">
+            <div className="w-full md:w-1/2 p-2 md:p-6 flex items-center justify-center mb-8 md:mb-0">
+              <AboutUs />
+            </div>
+            <div className="w-full md:w-1/2 p-2 md:p-6">
+              <div className="h-full flex items-center justify-center">
+                <Tokens wallet={wallet} ownerAddress={address} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
