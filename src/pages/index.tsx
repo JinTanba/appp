@@ -40,7 +40,7 @@ const Title = ({ activeTab }: {activeTab: string}) => {
   let content = "SaucyBlock"
   
   return (
-    <div className={`w-full md:w-[525px] text-white ${ibmPlexSans.className} text-[60px] md:text-[110px] font-extralight leading-none tracking-[-3px] md:tracking-[-6.6px]`} style={{fontWeight: 100, textShadow:" 0px 4px 55px #FFF"}}>
+    <div className={`w-full md:w-[525px] text-white ${ibmPlexSans.className} text-[60px] md:text-[110px] font-extralight leading-none tracking-[-3px] md:tracking-[-6.6px] mb-4`} style={{fontWeight: 100, textShadow:" 0px 4px 55px #FFF"}}>
       {content}
     </div>
   )

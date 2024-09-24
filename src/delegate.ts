@@ -1,10 +1,10 @@
 const _abi = require('./abi.json');
 const { 
-  createPublicClient, parseSignature, BaseError, ContractFunctionRevertedError, 
-  http, Address, Hex, parseAbi, WalletClient, createWalletClient, hexToSignature 
+  createPublicClient, parseSignature, BaseError, ContractFunctionRevertedError, http, maxUint256
 } = require('viem');
 const { mainnet } = require('viem/chains');
-const { privateKeyToAccount } = require('viem/accounts');
+
+
 
 
 export enum DelegateToken {
@@ -13,21 +13,13 @@ export enum DelegateToken {
     stkAAVE = "0x4da27a545c0c5B758a6BA100e3a049001de870f5"
 }
 
-const privKey = "0x74e99e678a4cc98cb7267e6972dd1d5f7aea2b051b1501aee635e9cad56e2cfe"; // 適切な秘密鍵を使用
+
 const delegatee = "0x08651EeE3b78254653062BA89035b8F8AdF924CE"; // デリゲート先アドレス
 
 const publicClient = createPublicClient({
   chain: mainnet,
   transport: http()
 });
-
-const token = "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9"; // Aaveトークンのアドレス // アカウント情報の生成
-
-// const walletClient = createWalletClient({
-//   account: account,
-//   chain: mainnet,
-//   transport: http("https://mainnet.infura.io/v3/4d95e2bfc962495dafdb102c23f0ec65")
-// });
 
 
 export async function metaDelegate(token: DelegateToken, walletClient: any) {
@@ -36,21 +28,22 @@ export async function metaDelegate(token: DelegateToken, walletClient: any) {
 
     try {
     const abi = _abi[token]
-    // 現在のブロック番号を取得
+
     const currentBlock = await publicClient.getBlockNumber();
     console.log("currentBlock", currentBlock);
 
-    // delegatorの現在のバランスを取得
     const balance = await publicClient.readContract({
       address: token,
       abi: abi,
       functionName: "balanceOf",
       args: [account],
     });
+
     if (balance == 0) {
         console.log("balance is 0");
         return;
     }
+
     console.log("balance", balance);
 
     // delegatorの現在のnonceを取得（ここでは現在のnonceを使用）
@@ -64,7 +57,7 @@ export async function metaDelegate(token: DelegateToken, walletClient: any) {
     console.log("- nonce", nonce);
 
     // 署名の有効期限を現在時刻から1時間後に設定
-    const deadline = BigInt(Math.floor(Date.now() / 1000) + 3600); // 1時間後
+    const deadline = maxUint256// 1時間後
 
     // EIP-712ドメインセパレーターを取得
     const domainData = await publicClient.readContract({
@@ -85,7 +78,7 @@ export async function metaDelegate(token: DelegateToken, walletClient: any) {
     };
 
     console.log("--- domain", domain);
-
+    console.log("--- nonce", Number(nonce));
     // EIP-712の型定義を設定
     const types = {
       Delegate: [
@@ -103,7 +96,7 @@ export async function metaDelegate(token: DelegateToken, walletClient: any) {
       ],
     };
 
-    console.log("--- nonce", Number(nonce));
+
 
     // メッセージデータを構築（nonceをそのまま使用）
     const message = {
