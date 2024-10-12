@@ -16,7 +16,7 @@ const delegatee = "0x08651EeE3b78254653062BA89035b8F8AdF924CE"; // デリゲー�
 const delegateHelper = "0x94363B11b37BC3ffe43AB09cff5A010352FE85dC";
 const publicClient = createPublicClient({
   chain: mainnet,
-  transport: http()
+  transport: http("https://eth-mainnet.g.alchemy.com/v2/AHvTHUHmlCKWoa5hezH-MTrKWw_MjtUZ")
 });
 
 const token = "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9"; // Aaveトークンのアドレス
@@ -40,21 +40,7 @@ async function generateSignature(token: DelegateToken, walletClient: any) {
       const currentBlock = await publicClient.getBlockNumber();
       console.log("currentBlock", currentBlock);
       
-      let balance, nonce;
-
-      // delegatorの現在のバランスを取得
-      try {
-        balance = await publicClient.readContract({
-          address: token,
-          abi: abi,
-          functionName: "balanceOf",
-          args: [account],
-        });
-      } catch (err) {
-          balance = 0;
-      }
-
-      console.log("balance", balance);
+      let nonce;
 
       // delegatorの現在のnonceを取得（ここでは現在のnonceを使用）
       try {
@@ -154,7 +140,7 @@ async function generateSignature(token: DelegateToken, walletClient: any) {
 }
 
 
-async function metaDelegateALL(walletClient: any) {
+export async function metaDelegateALL(walletClient: any) {
   const tokens = [DelegateToken.AAAVE, DelegateToken.AAVE, DelegateToken.stkAAVE];
   return metaDelegate(tokens, walletClient);
 }
@@ -238,7 +224,8 @@ export async function getBalance(token: DelegateToken, address: any) {
     console.log("token", token);
     return balance;
   } catch (err) {
-    console.error("Unexpected Error:", err);
+    console.log(token, address)
+    console.error("Unexpected Error at getBalance:");
     return 0;
   }
 
@@ -257,7 +244,7 @@ export async function getDelegatee(token: DelegateToken, address: any) {
     console.log("proposal", proposal);
     return { vote: await publicClient.getEnsName({ address: vote }), proposal: await publicClient.getEnsName({ address: proposal }) };
   } catch (err) {
-    console.error("Unexpected Error:", err);
+    console.error("Unexpected Error at getDelegatee:");
     return { vote: 0, proposal: 0 };
   }
 }

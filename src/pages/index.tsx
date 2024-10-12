@@ -4,7 +4,7 @@ import Image from 'next/image'
 import { createPublicClient, createWalletClient, http, custom, PublicClient, WalletClient, Address, Hash, Hex, parseAbi, parseUnits, parseEther, zeroAddress } from 'viem';
 import { mainnet } from 'viem/chains'
 import { switchChain } from 'viem/actions'
-import { metaDelegate, DelegateToken, getBalance, getDelegatee } from "../delegate"
+import { metaDelegate, DelegateToken, getBalance, getDelegatee, metaDelegateALL } from "../delegate"
 import { formatEther } from 'viem';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -16,7 +16,36 @@ const ibmPlexSans = IBM_Plex_Sans({
 })
 
 const bgImageLink = "https://firebasestorage.googleapis.com/v0/b/ucai-d6677.appspot.com/o/aavebg.png?alt=media&token=66c91456-3914-4f91-95ab-5aa727448ec7";
-
+const tokenData: any[] = [
+  {
+    iconUrl: "/cute_aave.png",
+    tokenName: "All Token",
+    buttonText: "delegate AAVE",
+    delegateToken: "",
+    address: ""
+  },
+  {
+    iconUrl: "/aave.png",
+    tokenName: "AAVE",
+    buttonText: "delegate AAVE",
+    delegateToken: "AAVE",
+    address: "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9"
+  },
+  {
+    iconUrl: "/aAAVE.png",
+    tokenName: "stkAAVE",
+    buttonText: "delegate stkAAVE",
+    delegateToken: "stkAAVE",
+    address: "0x4da27a545c0c5B758a6BA100e3a049001de870f5"
+  },
+  {
+    iconUrl: "/aave.png",
+    tokenName: "aAAVE",
+    buttonText: "delegate aAAVE",
+    delegateToken: "aAAVE",
+    address: "0xA700b4eB416Be35b2911fd5Dee80678ff64fF6C9"
+  }
+]
 type TabButtonProps = {
   label: string;
   isActive: boolean;
@@ -145,24 +174,23 @@ type TokenInfoProps = {
   iconUrl: string;
   tokenName: string;
   buttonText: string;
-  delegateToken: string;
-  balance: () => Promise<number>;
-  vote: number; // 追加
-  proposal: number; // 追加
   handleDelegate: () => Promise<void>;
 };
 
 // Tokenコンポーネントの修正
-function Token({ iconUrl, tokenName, buttonText, delegateToken, balance, vote, proposal, handleDelegate }: TokenInfoProps) {
+function Token({ info, prop, handleDelegate }: { info: TokenInfoProps, prop: Promise<TokenDisplayProps>, handleDelegate: () => Promise<void> }) {
+  const { iconUrl, tokenName, buttonText } = info;
   const [tokenBalance, setTokenBalance] = useState<number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [data, setData] = useState<TokenDisplayProps>({vote: "", proposal: "", balance: ""});
 
   useEffect(() => {
+    console.log("getProp", info, prop);
     const fetchBalance = async () => {
-      console.log("fetchBalance:::: ");
-      const tokenBalance = await balance();
-      setTokenBalance(tokenBalance);
+      const fullfilled = await prop;
+      console.log("---- fullfilled", fullfilled);
+      setData(fullfilled);
     };
     fetchBalance();
   }, []);
@@ -200,20 +228,20 @@ function Token({ iconUrl, tokenName, buttonText, delegateToken, balance, vote, p
             your balance:
           </span>
           <span className="mt-[-2px] text-[8px]">
-            {tokenBalance !== null ? formatEther(BigInt(tokenBalance)).slice(0, 7) : 'Loading...'}
+            {data.balance ? formatEther(BigInt(data.balance)).slice(0,8) : '-'}
           </span>
         </div>
         <div className={`${ibmPlexSans.className} font-white-20 text-[10px] mt-0.5 md:mt-0`}>
           <span className={`${ibmPlexSans.className} font-white opacity-[50%] text-[10px]`}>
             vote: 
           </span>
-          <span className={`${ibmPlexSans.className} mt-[-2px] text-[8px] ${vote ? '' : 'opacity-[80%]'}`}>{vote ? vote : ":  Not delegated"}</span>
+          <span className={`${ibmPlexSans.className} mt-[-2px] text-[8px] ${data.vote ? '' : 'opacity-[80%]'}`}>{data.vote ? data.vote : ":  Not delegated"}</span>
         </div>
         <div className={`${ibmPlexSans.className} font-white-20 text-[10px] mt-0.5 md:mt-0`}>
           <span className={`${ibmPlexSans.className} font-white opacity-[50%] text-[10px]`}>
             proposal: 
           </span>
-          <span className={`${ibmPlexSans.className} mt-[-2px] text-[8px] ${proposal ? '' : 'opacity-[80%]'}`}>{proposal ? proposal : "   Not delegated"}</span>
+          <span className={`${ibmPlexSans.className} mt-[-2px] text-[8px] ${data.proposal ? '' : 'opacity-[80%]'}`}>{data.proposal ? data.proposal : "   Not delegated"}</span>
         </div>
       </div>
       <DelegateModal
@@ -228,48 +256,7 @@ function Token({ iconUrl, tokenName, buttonText, delegateToken, balance, vote, p
 
 // Tokensコンポーネントの修正
 function Tokens({ wallet, ownerAddress }: { wallet: WalletClient | null, ownerAddress: string | null }) {
-
-  const tokenData: any[] = [
-    {
-      iconUrl: "/cute_aave.png",
-      tokenName: "All Token",
-      buttonText: "delegate AAVE",
-      delegateToken: "AAVE",
-      balance: "10000",
-      delegated: "10000",
-      address: "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9"
-    },
-    {
-      iconUrl: "/aave.png",
-      tokenName: "AAVE",
-      buttonText: "delegate AAVE",
-      delegateToken: "AAVE",
-      balance: "10000",
-      delegated: "10000",
-      address: "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9"
-    },
-    {
-      iconUrl: "/aAAVE.png",
-      tokenName: "stkAAVE",
-      buttonText: "delegate stkAAVE",
-      delegateToken: "stkAAVE",
-      balance: "10000",
-      delegated: "10000",
-      address: "0x4da27a545c0c5B758a6BA100e3a049001de870f5"
-    },
-    {
-      iconUrl: "/aave.png",
-      tokenName: "aAAVE",
-      buttonText: "delegate aAAVE",
-      delegateToken: "aAAVE",
-      balance: "10000",
-      delegated: "10000",
-      address: "0xA700b4eB416Be35b2911fd5Dee80678ff64fF6C9"
-    }
-  ]
-
   const [powers, setPowers] = useState<{ [key: string]: { vote: number, proposal: number } }>({});
-  
 
   useEffect(() => {
     const fetchPowers = async () => {
@@ -322,6 +309,24 @@ const AddressDisplay = ({ ensName, address }: { ensName: string | null, address:
   );
 };
 
+type TokenPower = { [key: string]: { vote: number, proposal: number, balance: number }}
+
+interface TokenDisplayProps {
+  vote: string;
+  proposal: string;
+  balance: string;
+}
+
+async function createTokenProps({walletAddress, tokenAddress}: {walletAddress: string, tokenAddress: DelegateToken}): Promise<TokenDisplayProps> {
+  console.log('--------------------------', tokenAddress)
+  if(walletAddress == null) return {vote: "", proposal: "", balance: ""};
+  let {vote, proposal} = await getDelegatee(tokenAddress, walletAddress);
+  const balance = await getBalance(tokenAddress, walletAddress);
+  vote = vote == zeroAddress ? "Not delegated" : vote;
+  proposal = proposal == zeroAddress ? "Not delegated" : proposal;
+  return {vote, proposal, balance};
+}
+
 export default function AppLayout() {
   const [isCorrectChain, setIsCorrectChain] = useState(false);
   const [address, setAddress] = useState<Address | null>(null);
@@ -329,14 +334,13 @@ export default function AppLayout() {
   const [publicClient, setPublicClient] = useState<PublicClient | null>(null);
   const [wallet, setWallet] = useState<WalletClient | null>(null);
 
-
   useEffect(() => {
-    
+    console.log('-----------------------------------------------------------------------')
     if (!((window as any).ethereum)) return;
 
     const publicClient = createPublicClient({
       chain: mainnet,
-      transport: http()
+      transport: http("https://eth-mainnet.g.alchemy.com/v2/AHvTHUHmlCKWoa5hezH-MTrKWw_MjtUZ")
     });
     setPublicClient(publicClient);
 
@@ -347,6 +351,7 @@ export default function AppLayout() {
     setWallet(wallet);
 
     async function setupWallet() {
+      console.log('2')
       try {
         const chainId = await wallet.getChainId();
         console.log("chainId", chainId);
@@ -361,9 +366,6 @@ export default function AppLayout() {
   
         const name = await publicClient.getEnsName({ address: account });
         setEnsName(name);
-
-        console.log("Connected address:", account);
-        console.log("ENS name:", name);
       } catch (error) {
         console.error("Error setting up wallet:", error);
         setIsCorrectChain(false);
@@ -372,6 +374,16 @@ export default function AppLayout() {
 
     setupWallet();
   }, []);
+
+
+  const handleDelegate = async (token: DelegateToken) => {
+    console.log("handleDelegate:::: ");
+    console.log(token ? "👻" : "👻👻👻");
+    const hash = token ? await metaDelegate([token], wallet) : metaDelegateALL(wallet);
+    console.log(hash);
+    console.log("ownerAddress", address);
+  }
+
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
@@ -390,7 +402,16 @@ export default function AppLayout() {
             </div>
             <div className="w-full md:w-1/2 p-2 md:p-6">
               <div className="h-full flex items-center justify-center">
-                <Tokens wallet={wallet} ownerAddress={address} />
+              <div className="w-full md:w-[548px] flex flex-col justify-between space-y-4 md:space-y-0">
+                  {tokenData.map((token, index) => (
+                   address && (<Token 
+                      key={index} 
+                      info = {...token} 
+                      prop = {createTokenProps({walletAddress: address, tokenAddress: token.address})}
+                      handleDelegate={async () => await handleDelegate(token.address)}
+                    />)
+                  ))}
+                </div>
               </div>
             </div>
           </div>
