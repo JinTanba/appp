@@ -362,9 +362,10 @@ export default function AppLayout() {
               <div className="h-full flex items-center justify-center">
               <div className="w-full md:w-[548px] flex flex-col justify-between space-y-4 md:space-y-0">
                   {tokenData.map((token, index) => (
+                  //@ts-ignore
                    address && (<Token 
                       key={index} 
-                      info = {...token} 
+                      info = {token} 
                       prop = {createTokenProps({walletAddress: address, tokenAddress: token.address})}
                       handleDelegate={async () => await handleDelegate(token.address)}
                     />)
