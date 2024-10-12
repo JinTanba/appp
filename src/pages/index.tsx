@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react'
 import { IBM_Plex_Sans } from 'next/font/google'
 import Image from 'next/image'
-import { createPublicClient, createWalletClient, http, custom, PublicClient, WalletClient, Address, Hash, Hex, parseAbi, parseUnits, parseEther } from 'viem';
+import { createPublicClient, createWalletClient, http, custom, PublicClient, WalletClient, Address, Hash, Hex, parseAbi, parseUnits, parseEther, zeroAddress } from 'viem';
 import { mainnet } from 'viem/chains'
 import { switchChain } from 'viem/actions'
-import { metaDelegate, DelegateToken, getBalance } from "../delegate"
+import { metaDelegate, DelegateToken, getBalance, getDelegatee } from "../delegate"
 import { formatEther } from 'viem';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -40,7 +40,7 @@ const Title = ({ activeTab }: {activeTab: string}) => {
   let content = "SaucyBlock"
   
   return (
-    <div className={`w-full md:w-[525px] text-white ${ibmPlexSans.className} text-[60px] md:text-[110px] font-extralight leading-none tracking-[-3px] md:tracking-[-6.6px] mb-4`} style={{fontWeight: 100, textShadow:" 0px 4px 55px #FFF"}}>
+    <div className={`w-full md:w-[525px] text-white ${ibmPlexSans.className} text-[60px] md:text-[110px] font-extralight leading-none mb-2 tracking-[-3px] md:tracking-[-6.6px]`} style={{fontWeight: 100, textShadow:" 0px 4px 55px #FFF"}}>
       {content}
     </div>
   )
@@ -82,7 +82,7 @@ export const DelegateModal = ({ isOpen, onClose, onConfirm, isProcessing }: { is
             onClick={onClose}
             className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
           >
-            <X className="h-4 w-4 text-black" />
+            <X className="h-4 w-4 text-black outline-none" />
             <span className="sr-only">Close</span>
           </button>
           <DialogHeader>
@@ -122,7 +122,7 @@ function AboutUs() {
 
   return (
     <div className="w-full md:w-[549px] flex flex-col">
-      <div className="w-full md:w-[200px] h-[40px] flex justify-between items-center mb-4 overflow-x-auto md:overflow-x-visible">
+      <div className="w-full md:w-[200px] h-[40px] flex justify-between items-center mb-10 overflow-x-auto md:overflow-x-visible">
         {['about', 'AAVE', 'aAAVE', 'stkAAVE'].map((tab) => (
           <TabButton
             key={tab}
@@ -139,87 +139,106 @@ function AboutUs() {
   )
 }
 
+
+// TokenInfoPropsの拡張
 type TokenInfoProps = {
   iconUrl: string;
   tokenName: string;
   buttonText: string;
   delegateToken: string;
   balance: () => Promise<number>;
-  delegated: string;
+  vote: number; // 追加
+  proposal: number; // 追加
   handleDelegate: () => Promise<void>;
 };
 
-function Token({ iconUrl, tokenName, buttonText, delegateToken, balance, delegated, handleDelegate }: TokenInfoProps) {
+// Tokenコンポーネントの修正
+function Token({ iconUrl, tokenName, buttonText, delegateToken, balance, vote, proposal, handleDelegate }: TokenInfoProps) {
   const [tokenBalance, setTokenBalance] = useState<number | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     const fetchBalance = async () => {
+      console.log("fetchBalance:::: ");
       const tokenBalance = await balance();
       setTokenBalance(tokenBalance);
     };
     fetchBalance();
-  }, [balance]);
-
-  const onDelegateClick = () => {
-    setIsModalOpen(true);
-  };
-
-  const onConfirmDelegate = async () => {
-    setIsProcessing(true);
-    try {
-      await handleDelegate();
-      // ここでdelegateの成功メッセージを表示するなどの処理を追加できます
-    } catch (error) {
-      console.error("Delegation failed:", error);
-      // エラーメッセージを表示するなどのエラーハンドリングを追加できます
-    } finally {
-      setIsProcessing(false);
-      setIsModalOpen(false);
-    }
-  };
+  }, []);
 
   return (
-    <div className={`text-white p-4 md:p-6 rounded-2xl w-full md:w-[560px] flex flex-col justify-between ${ibmPlexSans.className}`}>
+    <div
+      className={`text-white p-4 md:p-6 rounded-2xl w-full md:w-[560px] flex flex-col justify-between ${ibmPlexSans.className}`}
+    >
       <div className="flex items-center justify-between">
         <div className="flex items-center">
           <Image
             src={iconUrl}
             alt={`${tokenName} Logo`}
-            width={40}
-            height={40}
+            width={50}
+            height={50}
             className="rounded-full mr-3 md:mr-6"
           />
-          <h1 className="text-[30px] md:text-[50px] font-extralight tracking-[-2px] md:tracking-[-3.6px]">{tokenName}</h1>
+          <h1 className="text-[30px] md:text-[50px] font-extralight tracking-[-2px] md:tracking-[-3.6px]">
+            {tokenName}
+          </h1>
         </div>
-        <button onClick={onDelegateClick} className="w-[120px] md:w-[147px] h-[35px] md:h-[45px] rounded-[15px] bg-[rgba(22,22,22,0.20)] flex items-center justify-center">
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="w-[120px] md:w-[147px] h-[35px] md:h-[45px] rounded-[15px] bg-[rgba(22,22,22,0.20)] flex items-center justify-center"
+        >
           <span className="h-[33px] flex items-center opacity-[70%] text-white text-[10px] md:text-[12px] font-light">
             {buttonText}
           </span>
         </button>
       </div>
-      <div className="flex flex-col md:flex-row md:space-x-8 text-sm ml-[48px] mt-2 md:mt-0">
-        <p className={`${ibmPlexSans.className} font-white-20 text-[10px]`}>
-          <span className={`${ibmPlexSans.className} font-white-20 opacity-[50%] text-[10px]`}>your balance:</span> {tokenBalance !== null ? formatEther(BigInt(tokenBalance)) : 'Loading...'}
-        </p>
-        <p className={`${ibmPlexSans.className} font-white-20  text-[10px] mt-1 md:mt-0`}>
-          <span className={`${ibmPlexSans.className} font-white opacity-[50%] text-[10px]`}>total delegated to us:</span> {delegated}
-        </p>
+      <div className="flex flex-row text-left mt-2 md:mt-0 space-x-8">
+        {/* ラベルとデータをより近接して配置 */}
+        <div className={`${ibmPlexSans.className} font-white-20 text-[10px]`}>
+          <span className={`${ibmPlexSans.className} font-white-20 opacity-[50%] text-[10px]`}>
+            your balance:
+          </span>
+          <span className="mt-[-2px] text-[8px]">
+            {tokenBalance !== null ? formatEther(BigInt(tokenBalance)).slice(0, 7) : 'Loading...'}
+          </span>
+        </div>
+        <div className={`${ibmPlexSans.className} font-white-20 text-[10px] mt-0.5 md:mt-0`}>
+          <span className={`${ibmPlexSans.className} font-white opacity-[50%] text-[10px]`}>
+            vote: 
+          </span>
+          <span className={`${ibmPlexSans.className} mt-[-2px] text-[8px] ${vote ? '' : 'opacity-[80%]'}`}>{vote ? vote : ":  Not delegated"}</span>
+        </div>
+        <div className={`${ibmPlexSans.className} font-white-20 text-[10px] mt-0.5 md:mt-0`}>
+          <span className={`${ibmPlexSans.className} font-white opacity-[50%] text-[10px]`}>
+            proposal: 
+          </span>
+          <span className={`${ibmPlexSans.className} mt-[-2px] text-[8px] ${proposal ? '' : 'opacity-[80%]'}`}>{proposal ? proposal : "   Not delegated"}</span>
+        </div>
       </div>
-      <DelegateModal 
+      <DelegateModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onConfirm={onConfirmDelegate}
+        onConfirm={handleDelegate}
         isProcessing={isProcessing}
       />
     </div>
   );
 }
 
+// Tokensコンポーネントの修正
 function Tokens({ wallet, ownerAddress }: { wallet: WalletClient | null, ownerAddress: string | null }) {
 
   const tokenData: any[] = [
+    {
+      iconUrl: "/cute_aave.png",
+      tokenName: "All Token",
+      buttonText: "delegate AAVE",
+      delegateToken: "AAVE",
+      balance: "10000",
+      delegated: "10000",
+      address: "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9"
+    },
     {
       iconUrl: "/aave.png",
       tokenName: "AAVE",
@@ -249,9 +268,28 @@ function Tokens({ wallet, ownerAddress }: { wallet: WalletClient | null, ownerAd
     }
   ]
 
+  const [powers, setPowers] = useState<{ [key: string]: { vote: number, proposal: number } }>({});
+  
+
+  useEffect(() => {
+    const fetchPowers = async () => {
+
+      if (wallet && ownerAddress) {
+        const newPowers: { [key: string]: { vote: number, proposal: number } } = {};
+        for (const token of tokenData) {
+          console.log("token.address", token.address);
+          const power = await getDelegatee(token.address, ownerAddress);
+          newPowers[token.address] = { vote: power.vote == zeroAddress ? "Not delegated" : power.vote, proposal: power.proposal == zeroAddress ? "Not delegated" : power.proposal };
+        }
+        setPowers(newPowers);
+      }
+    };
+    fetchPowers();
+  }, []);
+
   const handleDelegate = async (token: DelegateToken) => {
     console.log("handleDelegate:::: ");
-    const hash = await metaDelegate(token, wallet);
+    const hash = await metaDelegate([token], wallet);
     console.log(hash);
     console.log("ownerAddress", ownerAddress);
   }
@@ -259,7 +297,14 @@ function Tokens({ wallet, ownerAddress }: { wallet: WalletClient | null, ownerAd
   return (
     <div className="w-full md:w-[548px] flex flex-col justify-between space-y-4 md:space-y-0">
       {tokenData.map((token, index) => (
-       <Token key={index} {...token} balance={async() => ownerAddress ? getBalance(token.address, ownerAddress) : 0} handleDelegate={async () => await handleDelegate(token.address)}/>
+       <Token 
+         key={index} 
+         {...token} 
+         balance={async() => ownerAddress ? getBalance(token.address, ownerAddress) : 0} 
+         vote={powers[token.address]?.vote}
+         proposal={powers[token.address]?.proposal}
+         handleDelegate={async () => await handleDelegate(token.address)}
+       />
       ))}
     </div>
   )
