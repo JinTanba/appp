@@ -186,6 +186,8 @@ try {
     }
   }
 
+  
+
   if (delegateParams.length === 0) {
       console.log("委任パラメータがありません。処理を中断します。");
       return;
@@ -202,6 +204,8 @@ try {
 
   console.log("Simulation result:", result);
   console.log("Simulation request:", request);
+
+
 
   const hash = await walletClient.writeContract(request);
   console.log("Transaction Hash:", hash);

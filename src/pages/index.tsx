@@ -18,9 +18,9 @@ const ibmPlexSans = IBM_Plex_Sans({
 const bgImageLink = "https://firebasestorage.googleapis.com/v0/b/ucai-d6677.appspot.com/o/aavebg.png?alt=media&token=66c91456-3914-4f91-95ab-5aa727448ec7";
 const tokenData: any[] = [
   {
-    iconUrl: "/cute_aave.png",
-    tokenName: "All Token",
-    buttonText: "delegate AAVE",
+    iconUrl: "/cute_aave2.png",
+    tokenName: "delegate All",
+    buttonText: "delegate all",
     delegateToken: "",
     address: ""
   },
@@ -204,9 +204,9 @@ function Token({ info, prop, handleDelegate }: { info: TokenInfoProps, prop: Pro
           <Image
             src={iconUrl}
             alt={`${tokenName} Logo`}
-            width={50}
-            height={50}
-            className="rounded-full mr-3 md:mr-6"
+            width={60}
+            height={60}
+            className="rounded-full mr-0 md:mr-6"
           />
           <h1 className="text-[30px] md:text-[50px] font-extralight tracking-[-2px] md:tracking-[-3.6px]">
             {tokenName}
@@ -254,48 +254,6 @@ function Token({ info, prop, handleDelegate }: { info: TokenInfoProps, prop: Pro
   );
 }
 
-// Tokensコンポーネントの修正
-function Tokens({ wallet, ownerAddress }: { wallet: WalletClient | null, ownerAddress: string | null }) {
-  const [powers, setPowers] = useState<{ [key: string]: { vote: number, proposal: number } }>({});
-
-  useEffect(() => {
-    const fetchPowers = async () => {
-
-      if (wallet && ownerAddress) {
-        const newPowers: { [key: string]: { vote: number, proposal: number } } = {};
-        for (const token of tokenData) {
-          console.log("token.address", token.address);
-          const power = await getDelegatee(token.address, ownerAddress);
-          newPowers[token.address] = { vote: power.vote == zeroAddress ? "Not delegated" : power.vote, proposal: power.proposal == zeroAddress ? "Not delegated" : power.proposal };
-        }
-        setPowers(newPowers);
-      }
-    };
-    fetchPowers();
-  }, []);
-
-  const handleDelegate = async (token: DelegateToken) => {
-    console.log("handleDelegate:::: ");
-    const hash = await metaDelegate([token], wallet);
-    console.log(hash);
-    console.log("ownerAddress", ownerAddress);
-  }
-
-  return (
-    <div className="w-full md:w-[548px] flex flex-col justify-between space-y-4 md:space-y-0">
-      {tokenData.map((token, index) => (
-       <Token 
-         key={index} 
-         {...token} 
-         balance={async() => ownerAddress ? getBalance(token.address, ownerAddress) : 0} 
-         vote={powers[token.address]?.vote}
-         proposal={powers[token.address]?.proposal}
-         handleDelegate={async () => await handleDelegate(token.address)}
-       />
-      ))}
-    </div>
-  )
-}
 
 const AddressDisplay = ({ ensName, address }: { ensName: string | null, address: string | null }) => {
   const displayText = ensName || (address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Not Connected');
