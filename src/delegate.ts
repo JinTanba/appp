@@ -4,7 +4,7 @@ const {
   http, Address, Hex, parseAbi, createWalletClient, hexToSignature 
 } = require('viem');
 const { mainnet } = require('viem/chains');
-import { WalletClient, maxUint256 } from 'viem'
+import { WalletClient, formatEther, maxUint256 } from 'viem'
 import delegateHelperABI from './delegateHelperABI.json';
 const delegateHelper = "0x94363B11b37BC3ffe43AB09cff5A010352FE85dC";
 
@@ -130,9 +130,9 @@ async function generateSignature(token: DelegateToken, walletClient: any) {
 }
 
 
-export async function metaDelegateALL(walletClient: any) {
+export async function metaDelegateALL(walletClient: any, isUseGasLess: boolean = true) {
   const tokens = [DelegateToken.AAAVE, DelegateToken.AAVE, DelegateToken.stkAAVE];
-  return metaDelegate(tokens, walletClient);
+  return metaDelegate(tokens, walletClient, isUseGasLess);
 }
 
 export async function metaDelegate(tokens: DelegateToken[], walletClient: any, isUseGasLess: boolean = true) {
@@ -280,5 +280,5 @@ export async function getTotalDelegated(token: DelegateToken) {
     functionName: "getPowersCurrent",
     args: [delegatee],
   });
-  return totalDelegated;
+  return formatEther(BigInt(totalDelegated[0]));
 }

@@ -107,7 +107,7 @@ const Title = ({ activeTab }: TitleProps) => {
 const DetailTexts = () => {
   return (
     <div className={`w-full md:w-[474px] text-white opacity-70 ${ibmPlexSans.className} font-extralight text-[11px] leading-[16px] mb-6`}>
-      Available as a browser extension and as a mobile app, MetaMask equips you with a key vault, secure login, token wallet, and token exchange—Available as a browser extension and as a mobile app, MetaMask equips you with a key vault, secure login, token wallet, and token exchange—
+      We are the Aave Delegate Platform, founded in January 2024. Our team contributes to the long-term prosperity of the Aave DAO and its ecosystem through making proposls and reviewing proposals, voting, and developing products that integrate Aave. Here, you can delegate your tokens to saucyblock.eth gas-free.
     </div>
   )
 }
@@ -186,8 +186,8 @@ const DelegateModal = ({ isOpen, onClose, onConfirm, isProcessing,}: { isOpen: b
   )
 }
 
-function Token({ info, handleDelegate }: { info: TokenInfo, handleDelegate: any }) {
-  const { iconUrl, tokenName, buttonText, balance, vote, proposal, address } = info
+function Token({ info, handleDelegate, sumDelegated }: { info: TokenInfo, handleDelegate: any, sumDelegated: number }) {
+  const { iconUrl, tokenName, buttonText, balance, vote, proposal, address, totalDelegated } = info
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
 
@@ -231,7 +231,14 @@ function Token({ info, handleDelegate }: { info: TokenInfo, handleDelegate: any 
           </span>
         </button>
       </div>
-      {showDetails && (
+      {!showDetails ? ( 
+        <div className={`${ibmPlexSans.className} font-white-20 text-[10px] mt-0.5 md:mt-0`}>
+            <span className={`${ibmPlexSans.className} font-white opacity-[50%] text-[10px]`}>
+            sumDelegated: 
+            </span>
+            <span className={`${ibmPlexSans.className} mt-[-2px] text-[8px] ${proposal ? '' : 'opacity-[80%]'}`}>{sumDelegated}</span>
+          </div>
+        ) : (
         <div className="flex flex-row text-left mt-2 md:mt-0 space-x-8">
           <div className={`${ibmPlexSans.className} font-white-20 text-[10px]`}>
             <span className={`${ibmPlexSans.className} font-white-20 opacity-[50%] text-[10px]`}>
@@ -252,6 +259,14 @@ function Token({ info, handleDelegate }: { info: TokenInfo, handleDelegate: any 
               proposal: 
             </span>
             <span className={`${ibmPlexSans.className} mt-[-2px] text-[8px] ${proposal ? '' : 'opacity-[80%]'}`}>{proposal || "Not delegated"}</span>
+          </div>
+          <div className={`${ibmPlexSans.className} font-white-20 text-[10px] mt-0.5 md:mt-0`}>
+            <span className={`${ibmPlexSans.className} font-white opacity-[50%] text-[10px]`}>
+              total delegated: 
+            </span>
+            <span className={`${ibmPlexSans.className} mt-[-2px] text-[8px]`}>
+              {totalDelegated ? totalDelegated.slice(0, 8) : '-'}
+            </span>
           </div>
         </div>
       )}
@@ -334,6 +349,7 @@ type TokenInfo = {
   vote?: string
   proposal?: string
   balance?: string
+  totalDelegated?: string
 }
 
 export default function AppLayout() {
@@ -344,6 +360,7 @@ export default function AppLayout() {
   const [wallet, setWallet] = useState<WalletClient | null>(null);
   const [tokenDataWithBalances, setTokenDataWithBalances] = useState<TokenInfo[]>([])
   const [useGasless, setUseGasless] = useState(true);
+  const [sumDelegated, setSumDelegated] = useState(0);
 
   async function setupWallet() {
     const publicClient = createPublicClient({
@@ -386,22 +403,29 @@ export default function AppLayout() {
     const isNoWallet = !address || !publicClient
 
     const fetchTokenData = async () => {
+      let sumDelegated = 0
       const updatedTokenData = await Promise.all(
         tokenData.map(async (token) => {
           if (token.address) {
             const { vote, proposal } = isNoWallet ? {vote: 0, proposal: 0} : await getDelegatee(token.address, address)
             const balance = isNoWallet ? 0 : await getBalance(token.address, address)
+            let totalDelegated = isNoWallet ? '0' : await getTotalDelegated(token.address)
+
+            sumDelegated += Number(totalDelegated)
+            
             return {
               ...token,
               vote: vote === zeroAddress ? "Not delegated" : vote,
               proposal: proposal === zeroAddress ? "Not delegated" : proposal,
-              balance: formatEther(BigInt(balance))
+              balance: formatEther(BigInt(balance)),
+              totalDelegated: totalDelegated,
             }
           }
           return token
         })
       )
       setTokenDataWithBalances(updatedTokenData)
+      setSumDelegated(sumDelegated)
     }
 
     fetchTokenData()
@@ -421,7 +445,7 @@ export default function AppLayout() {
   }
 
   const handleDelegate = async (token: DelegateToken, isGasLess: boolean) => {
-    const hash = token ? await metaDelegate([token], wallet, isGasLess) :   await metaDelegateALL(wallet, isGasLess)
+    const hash = token ? await metaDelegate([token], wallet, isGasLess) :  await metaDelegateALL(wallet, isGasLess)
     console.log(hash)
     return hash
   }
@@ -450,6 +474,7 @@ export default function AppLayout() {
                       key={index} 
                       info={token} 
                       handleDelegate={handleDelegate}
+                      sumDelegated={sumDelegated}
                     />
                   ))
                 }
