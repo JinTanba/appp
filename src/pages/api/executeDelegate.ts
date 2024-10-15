@@ -11,6 +11,22 @@ const publicClient = createPublicClient({
   transport: http("https://eth-mainnet.g.alchemy.com/v2/YOUR_ALCHEMY_API_KEY")
 });
 
+function customParse(obj: any) {
+  if (typeof obj !== 'object' || obj === null) {
+    return obj;
+  }
+  
+  if (obj.type === 'BigInt' && typeof obj.value === 'string') {
+    console.log("---- obj.value", obj.value);
+    return BigInt(obj.value);
+  }
+  
+  for (let key in obj) {
+    obj[key] = customParse(obj[key]);
+  }
+  
+  return obj;
+}
 
 const privKey = process.env.PRIVATE_KEY;
 if (!privKey) {
