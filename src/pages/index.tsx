@@ -253,12 +253,6 @@ function Token({ info, handleDelegate }: { info: TokenInfo, handleDelegate: any 
             </span>
             <span className={`${ibmPlexSans.className} mt-[-2px] text-[8px] ${proposal ? '' : 'opacity-[80%]'}`}>{proposal || "Not delegated"}</span>
           </div>
-          <div className={`${ibmPlexSans.className} font-white-20 text-[10px] mt-0.5 md:mt-0`}>
-            <span className={`${ibmPlexSans.className} font-white opacity-[50%] text-[10px]`}>
-              proposal: 
-            </span>
-            <span className={`${ibmPlexSans.className} mt-[-2px] text-[8px] ${proposal ? '' : 'opacity-[80%]'}`}>{proposal || "Not delegated"}</span>
-          </div>
         </div>
       )}
       <DelegateModal
