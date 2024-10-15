@@ -28,7 +28,7 @@ function customParse(obj: any) {
   return obj;
 }
 
-const privKey = process.env.NEXT_PUBLIC_PRIVATE_KEY;
+const privKey = process.env.PRIVATE_KEY;
 if (!privKey) {
     throw new Error("PRIVATE_KEY is not set");
 }
