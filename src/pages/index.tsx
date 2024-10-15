@@ -282,7 +282,7 @@ function Token({ info, handleDelegate, sumDelegated }: { info: TokenInfo, handle
 
 
 function AboutUs() {
-  const tabs = ['about', 'Foram', 'Contact'];
+  const tabs = ['about', 'foram'];
   const [activeTab, setActiveTab] = useState(tabs[0]);
 
   // useEffect(() => {
