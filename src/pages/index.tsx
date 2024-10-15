@@ -187,37 +187,64 @@ const DelegateModal = ({ isOpen, onClose, onConfirm, isProcessing,}: { isOpen: b
 }
 
 function Token({ info, handleDelegate, sumDelegated }: { info: TokenInfo, handleDelegate: any, sumDelegated: number }) {
-  const { iconUrl, tokenName, buttonText, balance, vote, proposal, address, totalDelegated } = info
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [isProcessing, setIsProcessing] = useState(false)
+  const { iconUrl, tokenName, buttonText, balance, vote, proposal, address, totalDelegated } = info;
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const onConfirmDelegate = async (isGasLess: boolean) => {
-    setIsProcessing(true)
+    setIsProcessing(true);
     let hash;
     try {
-      hash = await handleDelegate(address, isGasLess)
+      hash = await handleDelegate(address, isGasLess);
     } finally {
-      setIsProcessing(false)
+      setIsProcessing(false);
     }
     return hash;
   }
 
-  const showDetails = tokenName !== "delegate All" // Delegate all or not
-
+  const showDetails = tokenName !== "delegate All";
+  
+  const imageAnimation = {
+    animate: {
+      x: [0, 3, -5, 3, 2], // Reduced movement range for subtler animation
+      transition: {
+        duration: 4, // Increased duration for slower animation
+        repeat: Infinity,
+        repeatType: "reverse" as const,
+        ease: "easeInOut",
+      },
+    },
+  };
   return (
     <div
       className={`text-white p-4 md:p-6 rounded-2xl w-full md:w-[560px] flex flex-col justify-between ${ibmPlexSans.className}`}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center">
-          <Image
-            src={iconUrl}
-            alt={`${tokenName} Logo`}
-            width={60}
-            height={60}
-            className="rounded-full mr-0 md:mr-6"
-          />
-           {/* if !showDetails add animation */}
+          <AnimatePresence>
+            {tokenName === "delegate All" ? (
+              <motion.div
+                variants={imageAnimation}
+                animate="animate"
+              >
+                <Image
+                  src={iconUrl}
+                  alt={`${tokenName} Logo`}
+                  width={80}
+                  height={80}
+                  className="rounded-full mr-0 md:mr-6"
+                />
+              </motion.div>
+            ) : (
+              <Image
+                src={iconUrl}
+                alt={`${tokenName} Logo`}
+                width={60}
+                height={60}
+                className="rounded-full mr-0 md:mr-6"
+              />
+            )}
+          </AnimatePresence>
           <h1 className="text-[30px] md:text-[50px] font-extralight tracking-[-2px] md:tracking-[-3.6px]">
             {tokenName}
           </h1>
@@ -233,12 +260,12 @@ function Token({ info, handleDelegate, sumDelegated }: { info: TokenInfo, handle
       </div>
       {!showDetails ? ( 
         <div className={`${ibmPlexSans.className} font-white-20 text-[10px] mt-0.5 md:mt-0`}>
-            <span className={`${ibmPlexSans.className} font-white opacity-[50%] text-[10px]`}>
+          <span className={`${ibmPlexSans.className} font-white opacity-[50%] text-[10px]`}>
             sumDelegated: 
-            </span>
-            <span className={`${ibmPlexSans.className} mt-[-2px] text-[8px] ${proposal ? '' : 'opacity-[80%]'}`}>{sumDelegated}</span>
-          </div>
-        ) : (
+          </span>
+          <span className={`${ibmPlexSans.className} mt-[-2px] text-[8px] ${proposal ? '' : 'opacity-[80%]'}`}>{sumDelegated}</span>
+        </div>
+      ) : (
         <div className="flex flex-row text-left mt-2 md:mt-0 space-x-8">
           <div className={`${ibmPlexSans.className} font-white-20 text-[10px]`}>
             <span className={`${ibmPlexSans.className} font-white-20 opacity-[50%] text-[10px]`}>
@@ -280,9 +307,8 @@ function Token({ info, handleDelegate, sumDelegated }: { info: TokenInfo, handle
   );
 }
 
-
 function AboutUs() {
-  const tabs = ['about', 'foram',];
+  const tabs = ['about', 'forum',];
   const [activeTab, setActiveTab] = useState(tabs[0]);
 
   // useEffect(() => {
@@ -305,7 +331,7 @@ function AboutUs() {
             key={tab}
             label={tab}
             isActive={activeTab === tab}
-            onClick={() => setActiveTab(tab)}
+            onClick={() => window.open(tab === 'forum' ? 'https://governance.aave.com/t/saucy-block-delegate-platform/16115' : 'https://aave.com/', '_blank')}
           />
         ))}
       </div>
