@@ -5,29 +5,17 @@ const {
 } = require('viem');
 const { mainnet } = require('viem/chains');
 import { maxUint256 } from 'viem'
-import delegateHelperABI from './delegateHelperABI.json';
 export enum DelegateToken {
     AAVE = "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9",
     AAAVE = "0xA700b4eB416Be35b2911fd5Dee80678ff64fF6C9",
     stkAAVE = "0x4da27a545c0c5B758a6BA100e3a049001de870f5"
 }
-
-const delegatee = "0x08651EeE3b78254653062BA89035b8F8AdF924CE"; // デリゲート先アドレス
-const delegateHelper = "0x94363B11b37BC3ffe43AB09cff5A010352FE85dC";
+const delegatee = "0x08651EeE3b78254653062BA89035b8F8AdF924CE";
 const publicClient = createPublicClient({
   chain: mainnet,
   transport: http("https://eth-mainnet.g.alchemy.com/v2/AHvTHUHmlCKWoa5hezH-MTrKWw_MjtUZ")
 });
 
-const token = "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9"; // Aaveトークンのアドレス
-
-// const walletClient = createWalletClient({
-//   account: account,
-//   chain: mainnet,
-//   transport: http("https://mainnet.infura.io/v3/4d95e2bfc962495dafdb102c23f0ec65")
-// });
-
-// 既存のimport文はそのまま
 
 async function generateSignature(token: DelegateToken, walletClient: any) {
   try {
@@ -210,6 +198,7 @@ try {
   const { txHash } = await response.json();
 
   console.log("Transaction Hash:", txHash);
+  return txHash;
 } catch (error) {
   console.error("metaDelegate 関数内でエラーが発生しました:", error);
 }

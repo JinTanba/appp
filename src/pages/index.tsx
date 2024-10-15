@@ -8,7 +8,8 @@ import { metaDelegate, DelegateToken, getBalance, getDelegatee, metaDelegateALL 
 import { formatEther } from 'viem'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { LogOut, X } from 'lucide-react'
+import { CheckCircle, LogOut, X } from 'lucide-react'
+import { motion, AnimatePresence } from "framer-motion";
 
 const ibmPlexSans = IBM_Plex_Sans({
   subsets: ['latin'],
@@ -67,25 +68,60 @@ const TabButton = ({ label, isActive, onClick }: TabButtonProps) => (
   </button>
 )
 
-const Title = ({ activeTab }: {activeTab: string}) => {
-  let content = "SaucyBlock"
-  
+type TitleProps = {
+  activeTab: string;
+}
+
+
+const Title = ({ activeTab }: TitleProps) => {
+  const [content, setContent] = useState("Saucy Block");
+
+  useEffect(() => {
+    let currentContent;
+    if(activeTab === "about") currentContent = "Saucy Block";
+    if(activeTab === "AAVE") currentContent = "10000";
+    if(activeTab === "aAAVE") currentContent = "1000";
+    if(activeTab === "stkAAVE") currentContent = "100000";
+    setContent(currentContent as string);
+  }, [activeTab]);
+
   return (
-    <div className={`w-full md:w-[525px] text-white ${ibmPlexSans.className} text-[60px] md:text-[110px] font-extralight leading-none mb-2 tracking-[-3px] md:tracking-[-6.6px]`} style={{fontWeight: 100, textShadow:" 0px 4px 55px #FFF"}}>
-      {content}
-    </div>
-  )
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={content}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.3 }}
+        className={`w-full md:w-[525px] text-white ${ibmPlexSans.className} text-[60px] md:text-[110px] font-extralight leading-none mb-4 tracking-[-3px] md:tracking-[-6.6px]`}
+        style={{fontWeight: 100, textShadow: "0px 4px 55px #FFF"}}
+      >
+        {content}
+      </motion.div>
+    </AnimatePresence>
+  );
 }
 
 const DetailTexts = () => {
   return (
-    <div className={`w-full md:w-[474px] text-white/70 ${ibmPlexSans.className} text-[11px] font-light leading-[16px] mb-6`}>
+    <div className={`w-full md:w-[474px] text-white opacity-70 ${ibmPlexSans.className} font-extralight text-[11px] leading-[16px] mb-6`}>
       Available as a browser extension and as a mobile app, MetaMask equips you with a key vault, secure login, token wallet, and token exchange—Available as a browser extension and as a mobile app, MetaMask equips you with a key vault, secure login, token wallet, and token exchange—
     </div>
   )
 }
 
-export const DelegateModal = ({ isOpen, onClose, onConfirm, isProcessing }: { isOpen: boolean, onClose: () => void, onConfirm: () => void, isProcessing: boolean }) => {
+export const DelegateModal = ({ isOpen, onClose, onConfirm, isProcessing }: { isOpen: boolean, onClose: () => void, onConfirm: () => Promise<string>, isProcessing: boolean }) => {
+  const [showSuccess, setShowSuccess] = useState(false)
+
+  const handleConfirm = async () => {
+    const hash = await onConfirm()
+    setShowSuccess(hash ? true : false)
+    setTimeout(() => {
+      setShowSuccess(false)
+      onClose()
+    }, 2000)
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px] rounded-2xl h-[500px] overflow-y-auto fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col justify-between">
@@ -93,6 +129,8 @@ export const DelegateModal = ({ isOpen, onClose, onConfirm, isProcessing }: { is
           <button
             onClick={onClose}
             className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
+            tabIndex={-1}
+            aria-hidden="true"
           >
             <X className="h-4 w-4 text-black outline-none" />
             <span className="sr-only">Close</span>
@@ -111,14 +149,22 @@ export const DelegateModal = ({ isOpen, onClose, onConfirm, isProcessing }: { is
         
         <DialogFooter className="">
           {isProcessing ? (
-            <div className="flex items-center justify-center w-full h-[40px] bg-[#2B2D3C] text-[#2B2D3C] rounded">
-              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-              <p className="ml-2">Processing delegation...</p>
+            <Button 
+              className="w-full h-[40px] bg-[#2B2D3C] text-white flex items-center justify-center"
+              disabled
+            >
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+              Processing delegation...
+            </Button>
+          ) : showSuccess ? (
+            <div className="flex items-center justify-center w-full h-[40px] bg-green-500 text-white rounded">
+              <CheckCircle className="mr-2" />
+              <p>Delegation successful!</p>
             </div>
           ) : (
             <Button 
               className="border-black-300 border bg-[#2B2D3C] text-white w-full h-[40px] hover:bg-black hover:text-white" 
-              onClick={onConfirm}
+              onClick={handleConfirm}
             >
               delegate to saucyblock!!!
             </Button>
@@ -129,48 +175,23 @@ export const DelegateModal = ({ isOpen, onClose, onConfirm, isProcessing }: { is
   )
 }
 
-function AboutUs() {
-  const [activeTab, setActiveTab] = useState('about')
-
-  return (
-    <div className="w-full md:w-[549px] flex flex-col">
-      <div className="w-full md:w-[200px] h-[40px] flex justify-between items-center mb-10 overflow-x-auto md:overflow-x-visible">
-        {['about', 'AAVE', 'aAAVE', 'stkAAVE'].map((tab) => (
-          <TabButton
-            key={tab}
-            label={tab}
-            isActive={activeTab === tab}
-            onClick={() => setActiveTab(tab)}
-          />
-        ))}
-      </div>
-      <Title activeTab={activeTab} />
-      <DetailTexts />
-    </div>
-  )
-}
-
-type TokenInfoProps = {
-  iconUrl: string
-  tokenName: string
-  buttonText: string
-  handleDelegate: () => Promise<void>
-}
-
-function Token({ info, handleDelegate }: { info: TokenInfo, handleDelegate: () => Promise<void> }) {
+function Token({ info, handleDelegate }: { info: TokenInfo, handleDelegate: () => Promise<string> }) {
   const { iconUrl, tokenName, buttonText, balance, vote, proposal } = info
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
 
   const onConfirmDelegate = async () => {
     setIsProcessing(true)
+    let hash;
     try {
-      await handleDelegate()
+      hash = await handleDelegate()
     } finally {
       setIsProcessing(false)
-      setIsModalOpen(false)
     }
+    return hash;
   }
+
+  const showDetails = tokenName !== "delegate All"
 
   return (
     <div
@@ -198,28 +219,30 @@ function Token({ info, handleDelegate }: { info: TokenInfo, handleDelegate: () =
           </span>
         </button>
       </div>
-      <div className="flex flex-row text-left mt-2 md:mt-0 space-x-8">
-        <div className={`${ibmPlexSans.className} font-white-20 text-[10px]`}>
-          <span className={`${ibmPlexSans.className} font-white-20 opacity-[50%] text-[10px]`}>
-            your balance:
-          </span>
-          <span className="mt-[-2px] text-[8px]">
-            {balance ? (balance.slice(0,8)) : '-'}
-          </span>
+      {showDetails && (
+        <div className="flex flex-row text-left mt-2 md:mt-0 space-x-8">
+          <div className={`${ibmPlexSans.className} font-white-20 text-[10px]`}>
+            <span className={`${ibmPlexSans.className} font-white-20 opacity-[50%] text-[10px]`}>
+              your balance:
+            </span>
+            <span className="mt-[-2px] text-[8px]">
+              {balance ? (balance.slice(0,8)) : '-'}
+            </span>
+          </div>
+          <div className={`${ibmPlexSans.className} font-white-20 text-[10px] mt-0.5 md:mt-0`}>
+            <span className={`${ibmPlexSans.className} font-white opacity-[50%] text-[10px]`}>
+              vote: 
+            </span>
+            <span className={`${ibmPlexSans.className} mt-[-2px] text-[8px] ${vote ? '' : 'opacity-[80%]'}`}>{vote || "Not delegated"}</span>
+          </div>
+          <div className={`${ibmPlexSans.className} font-white-20 text-[10px] mt-0.5 md:mt-0`}>
+            <span className={`${ibmPlexSans.className} font-white opacity-[50%] text-[10px]`}>
+              proposal: 
+            </span>
+            <span className={`${ibmPlexSans.className} mt-[-2px] text-[8px] ${proposal ? '' : 'opacity-[80%]'}`}>{proposal || "Not delegated"}</span>
+          </div>
         </div>
-        <div className={`${ibmPlexSans.className} font-white-20 text-[10px] mt-0.5 md:mt-0`}>
-          <span className={`${ibmPlexSans.className} font-white opacity-[50%] text-[10px]`}>
-            vote: 
-          </span>
-          <span className={`${ibmPlexSans.className} mt-[-2px] text-[8px] ${vote ? '' : 'opacity-[80%]'}`}>{vote || "Not delegated"}</span>
-        </div>
-        <div className={`${ibmPlexSans.className} font-white-20 text-[10px] mt-0.5 md:mt-0`}>
-          <span className={`${ibmPlexSans.className} font-white opacity-[50%] text-[10px]`}>
-            proposal: 
-          </span>
-          <span className={`${ibmPlexSans.className} mt-[-2px] text-[8px] ${proposal ? '' : 'opacity-[80%]'}`}>{proposal || "Not delegated"}</span>
-        </div>
-      </div>
+      )}
       <DelegateModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -228,8 +251,43 @@ function Token({ info, handleDelegate }: { info: TokenInfo, handleDelegate: () =
       />
     </div>
   );
- 
 }
+
+
+function AboutUs() {
+  const tabs = ['about', 'AAVE', 'aAAVE', 'stkAAVE'];
+  const [activeTab, setActiveTab] = useState(tabs[0]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveTab((currentTab) => {
+        const currentIndex = tabs.indexOf(currentTab);
+        const nextIndex = (currentIndex + 1) % tabs.length;
+        return tabs[nextIndex];
+      });
+    }, 7000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="w-full md:w-[549px] flex flex-col">
+      <div className="w-full md:w-[200px] h-[40px] flex justify-between items-center mb-2 overflow-x-auto md:overflow-x-visible">
+        {tabs.map((tab) => (
+          <TabButton
+            key={tab}
+            label={tab}
+            isActive={activeTab === tab}
+            onClick={() => setActiveTab(tab)}
+          />
+        ))}
+      </div>
+      <Title activeTab={activeTab} />
+      <DetailTexts />
+    </div>
+  );
+}
+
 
 const AddressDisplay = ({ ensName, address, disconnectWallet, connectWallet }: { ensName: string | null, address: string | null, disconnectWallet: () => void, connectWallet: () => void }) => {
   const displayText = ensName || (address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Not Connected');
@@ -312,14 +370,14 @@ export default function AppLayout() {
 
 
   useEffect(() => {
-    if (!address || !publicClient) return
+    const isNoWallet = !address || !publicClient
 
     const fetchTokenData = async () => {
       const updatedTokenData = await Promise.all(
         tokenData.map(async (token) => {
           if (token.address) {
-            const { vote, proposal } = await getDelegatee(token.address, address)
-            const balance = await getBalance(token.address, address)
+            const { vote, proposal } = isNoWallet ? {vote: 0, proposal: 0} : await getDelegatee(token.address, address)
+            const balance = isNoWallet ? 0 : await getBalance(token.address, address)
             return {
               ...token,
               vote: vote === zeroAddress ? "Not delegated" : vote,
@@ -352,7 +410,7 @@ export default function AppLayout() {
   const handleDelegate = async (token: DelegateToken) => {
     const hash = token ? await metaDelegate([token], wallet) :   await metaDelegateALL(wallet)
     console.log(hash)
-    
+    return hash
   }
 
   return (
