@@ -282,7 +282,7 @@ function Token({ info, handleDelegate, sumDelegated }: { info: TokenInfo, handle
 
 
 function AboutUs() {
-  const tabs = ['about', 'foram'];
+  const tabs = ['about', 'foram',];
   const [activeTab, setActiveTab] = useState(tabs[0]);
 
   // useEffect(() => {
@@ -299,7 +299,7 @@ function AboutUs() {
 
   return (
     <div className="w-full md:w-[549px] flex flex-col">
-      <div className="w-full md:w-[200px] h-[40px] flex justify-between items-center mb-2 overflow-x-auto md:overflow-x-visible">
+      <div className="w-full md:w-[100px] h-[40px] flex justify-between items-center mb-2 overflow-x-auto md:overflow-x-visible">
         {tabs.map((tab) => (
           <TabButton
             key={tab}
