@@ -10,32 +10,65 @@ const publicClient = createPublicClient({
     chain: mainnet,
     transport: http("https://eth-mainnet.g.alchemy.com/v2/AHvTHUHmlCKWoa5hezH-MTrKWw_MjtUZ")
 });
-const privKey = process.env.PRIVATE_KEY;
+
+function customParse(obj: any) {
+  if (typeof obj !== 'object' || obj === null) {
+    return obj;
+  }
+  
+  if (obj.type === 'BigInt' && typeof obj.value === 'string') {
+    console.log("---- obj.value", obj.value);
+    return BigInt(obj.value);
+  }
+  
+  for (let key in obj) {
+    obj[key] = customParse(obj[key]);
+  }
+  
+  return obj;
+}
+
+const privKey = process.env.NEXT_PUBLIC_PRIVATE_KEY;
 if (!privKey) {
     throw new Error("PRIVATE_KEY is not set");
 }
+
 const account = privateKeyToAccount(privKey as `0x${string}`);
+
 const walletClient = createWalletClient({
     account: account,
     chain: mainnet,
-    transport: http("https://eth-mainnet.g.alchemy.com/v2/AHvTHUHmlCKWoa5hezH-MTrKWw_MjtUZ")
+    transport: http("https://mainnet.infura.io/v3/4d95e2bfc962495dafdb102c23f0ec65")
 });
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
-  const { params } = req.body;
+  console.log("---- req.body", req.body);
+  const params = customParse(req.body);
+
+  console.log("---- params", params);
 
   const { request, result } = await publicClient.simulateContract({
     address: delegateHelper,
     abi: delegateHelperABI,
     functionName: 'batchMetaDelegate',
-    account: account.address, // simulateContractではアカウントアドレスを指定
-    args:[params],
+    account: account.address,
+    args:[params]
   });
 
-  const hash = walletClient.writeContract(request);
+  console.log("---- request", request);
+  console.log("---- result", result);
 
+  const hash = await walletClient.writeContract({
+    address: delegateHelper,
+    abi: delegateHelperABI,
+    functionName: 'batchMetaDelegate',
+    args: [params],
+  });
+
+  
+  
   res.status(200).json({ txHash: hash });
 }

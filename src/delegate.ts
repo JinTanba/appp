@@ -128,14 +128,12 @@ async function generateSignature(token: DelegateToken, walletClient: any) {
 
       return { v, r, s, account };
   } catch (error: any) {
-      if (error.code === 4001) { // ユーザーがリクエストを拒否した場合
+      if (error.code === 4001) {
           console.error("ユーザーが署名リクエストを拒否しました。");
-          // 必要に応じて、ユーザーにフィードバックを提供するコードを追加
       } else {
           console.error("署名生成中に予期しないエラーが発生しました:", error);
-          // 他のエラーハンドリングを追加
       }
-      throw error; // エラーを再スローして、呼び出し元でも処理できるようにする
+      throw error;
   }
 }
 
@@ -186,35 +184,38 @@ try {
     }
   }
 
-  
-
   if (delegateParams.length === 0) {
       console.log("委任パラメータがありません。処理を中断します。");
       return;
   }
 
-  // simulate
-  const { request, result } = await publicClient.simulateContract({
-    address: delegateHelper,
-    abi: delegateHelperABI,
-    functionName: 'batchMetaDelegate',
-    account: account, // simulateContractではアカウントアドレスを指定
-    args:[delegateParams],
+  console.log("execute 🔥🔥🔥", delegateParams);
+
+  const response = await fetch("/api/executeDelegate", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(delegateParams, (key, value) =>
+      typeof value === 'bigint' ? value.toString() : value
+    ),
   });
 
-  console.log("Simulation result:", result);
-  console.log("Simulation request:", request);
+  console.log("response", response);
 
+  if (!response.ok) {
+    throw new Error("HTTP Error: " + response.statusText);
+  }
 
+  const { txHash } = await response.json();
 
-  const hash = await walletClient.writeContract(request);
-  console.log("Transaction Hash:", hash);
-  return hash;
+  console.log("Transaction Hash:", txHash);
 } catch (error) {
   console.error("metaDelegate 関数内でエラーが発生しました:", error);
-  // 必要に応じてユーザーに通知するコードを追加
 }
 }
+
+
 export async function getBalance(token: DelegateToken, address: any) {
   try {
     const abi = _abi[token]

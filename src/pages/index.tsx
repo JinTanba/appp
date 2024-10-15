@@ -1,21 +1,22 @@
 import React, { useEffect, useState } from 'react'
 import { IBM_Plex_Sans } from 'next/font/google'
 import Image from 'next/image'
-import { createPublicClient, createWalletClient, http, custom, PublicClient, WalletClient, Address, Hash, Hex, parseAbi, parseUnits, parseEther, zeroAddress } from 'viem';
+import { createPublicClient, createWalletClient, http, custom, PublicClient, WalletClient, Address, Hash, Hex, parseAbi, parseUnits, parseEther, zeroAddress } from 'viem'
 import { mainnet } from 'viem/chains'
 import { switchChain } from 'viem/actions'
 import { metaDelegate, DelegateToken, getBalance, getDelegatee, metaDelegateALL } from "../delegate"
-import { formatEther } from 'viem';
+import { formatEther } from 'viem'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { X } from 'lucide-react';
+import { LogOut, X } from 'lucide-react'
 
 const ibmPlexSans = IBM_Plex_Sans({
   subsets: ['latin'],
   weight: ['200', '300', '400', '500', '600', '700'],
 })
 
-const bgImageLink = "https://firebasestorage.googleapis.com/v0/b/ucai-d6677.appspot.com/o/aavebg.png?alt=media&token=66c91456-3914-4f91-95ab-5aa727448ec7";
+const bgImageLink = "https://firebasestorage.googleapis.com/v0/b/ucai-d6677.appspot.com/o/aavebg.png?alt=media&token=66c91456-3914-4f91-95ab-5aa727448ec7"
+
 const tokenData: any[] = [
   {
     iconUrl: "/cute_aave2.png",
@@ -46,11 +47,12 @@ const tokenData: any[] = [
     address: "0xA700b4eB416Be35b2911fd5Dee80678ff64fF6C9"
   }
 ]
+
 type TabButtonProps = {
-  label: string;
-  isActive: boolean;
-  onClick: () => void;
-};
+  label: string
+  isActive: boolean
+  onClick: () => void
+}
 
 const TabButton = ({ label, isActive, onClick }: TabButtonProps) => (
   <button
@@ -82,25 +84,6 @@ const DetailTexts = () => {
     </div>
   )
 }
-
-const DelegateButton = () => {
-  const handleClick = () => {
-    console.log("Delegate button clicked");
-    // ここに実際のデリゲート処理を追加
-  };
-
-  return (
-    <button
-      onClick={handleClick}
-      className={`w-full md:w-[222.902px] h-[45px] rounded-[15px] bg-[rgba(22,22,22,0.20)] flex items-center justify-center ${ibmPlexSans.className}`}
-    >
-      <span className={`text-white text-[12px] font-light ${ibmPlexSans.className}`} >
-        👻 delegateALL
-      </span>
-    </button>
-  )
-}
-
 
 export const DelegateModal = ({ isOpen, onClose, onConfirm, isProcessing }: { isOpen: boolean, onClose: () => void, onConfirm: () => void, isProcessing: boolean }) => {
   return (
@@ -143,8 +126,8 @@ export const DelegateModal = ({ isOpen, onClose, onConfirm, isProcessing }: { is
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  );
-};
+  )
+}
 
 function AboutUs() {
   const [activeTab, setActiveTab] = useState('about')
@@ -163,37 +146,31 @@ function AboutUs() {
       </div>
       <Title activeTab={activeTab} />
       <DetailTexts />
-      <DelegateButton />
     </div>
   )
 }
 
-
-// TokenInfoPropsの拡張
 type TokenInfoProps = {
-  iconUrl: string;
-  tokenName: string;
-  buttonText: string;
-  handleDelegate: () => Promise<void>;
-};
+  iconUrl: string
+  tokenName: string
+  buttonText: string
+  handleDelegate: () => Promise<void>
+}
 
-// Tokenコンポーネントの修正
-function Token({ info, prop, handleDelegate }: { info: TokenInfoProps, prop: Promise<TokenDisplayProps>, handleDelegate: () => Promise<void> }) {
-  const { iconUrl, tokenName, buttonText } = info;
-  const [tokenBalance, setTokenBalance] = useState<number | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [data, setData] = useState<TokenDisplayProps>({vote: "", proposal: "", balance: ""});
+function Token({ info, handleDelegate }: { info: TokenInfo, handleDelegate: () => Promise<void> }) {
+  const { iconUrl, tokenName, buttonText, balance, vote, proposal } = info
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
 
-  useEffect(() => {
-    console.log("getProp", info, prop);
-    const fetchBalance = async () => {
-      const fullfilled = await prop;
-      console.log("---- fullfilled", fullfilled);
-      setData(fullfilled);
-    };
-    fetchBalance();
-  }, []);
+  const onConfirmDelegate = async () => {
+    setIsProcessing(true)
+    try {
+      await handleDelegate()
+    } finally {
+      setIsProcessing(false)
+      setIsModalOpen(false)
+    }
+  }
 
   return (
     <div
@@ -222,126 +199,161 @@ function Token({ info, prop, handleDelegate }: { info: TokenInfoProps, prop: Pro
         </button>
       </div>
       <div className="flex flex-row text-left mt-2 md:mt-0 space-x-8">
-        {/* ラベルとデータをより近接して配置 */}
         <div className={`${ibmPlexSans.className} font-white-20 text-[10px]`}>
           <span className={`${ibmPlexSans.className} font-white-20 opacity-[50%] text-[10px]`}>
             your balance:
           </span>
           <span className="mt-[-2px] text-[8px]">
-            {data.balance ? formatEther(BigInt(data.balance)).slice(0,8) : '-'}
+            {balance ? (balance.slice(0,8)) : '-'}
           </span>
         </div>
         <div className={`${ibmPlexSans.className} font-white-20 text-[10px] mt-0.5 md:mt-0`}>
           <span className={`${ibmPlexSans.className} font-white opacity-[50%] text-[10px]`}>
             vote: 
           </span>
-          <span className={`${ibmPlexSans.className} mt-[-2px] text-[8px] ${data.vote ? '' : 'opacity-[80%]'}`}>{data.vote ? data.vote : ":  Not delegated"}</span>
+          <span className={`${ibmPlexSans.className} mt-[-2px] text-[8px] ${vote ? '' : 'opacity-[80%]'}`}>{vote || "Not delegated"}</span>
         </div>
         <div className={`${ibmPlexSans.className} font-white-20 text-[10px] mt-0.5 md:mt-0`}>
           <span className={`${ibmPlexSans.className} font-white opacity-[50%] text-[10px]`}>
             proposal: 
           </span>
-          <span className={`${ibmPlexSans.className} mt-[-2px] text-[8px] ${data.proposal ? '' : 'opacity-[80%]'}`}>{data.proposal ? data.proposal : "   Not delegated"}</span>
+          <span className={`${ibmPlexSans.className} mt-[-2px] text-[8px] ${proposal ? '' : 'opacity-[80%]'}`}>{proposal || "Not delegated"}</span>
         </div>
       </div>
       <DelegateModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onConfirm={handleDelegate}
+        onConfirm={onConfirmDelegate}
         isProcessing={isProcessing}
       />
     </div>
   );
+ 
 }
 
-
-const AddressDisplay = ({ ensName, address }: { ensName: string | null, address: string | null }) => {
+const AddressDisplay = ({ ensName, address, disconnectWallet, connectWallet }: { ensName: string | null, address: string | null, disconnectWallet: () => void, connectWallet: () => void }) => {
   const displayText = ensName || (address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Not Connected');
   const isConnected = Boolean(ensName || address);
+
+  const handleClick = async () => {
+    console.log("clicked");
+    disconnectWallet();
+  };
   
   return (
-    <div className={`absolute top-4 right-4 text-white ${ibmPlexSans.className} text-sm text-[10px] font-extralight bg-black bg-opacity-50 px-3 py-1 rounded-[10px] flex items-center`}>
+    <div 
+      onClick={isConnected ? handleClick : connectWallet}
+      className={`absolute z-[1000] top-4 right-4 text-white ${ibmPlexSans.className} text-sm text-[10px] font-extralight bg-black bg-opacity-50 px-3 py-1 rounded-[10px] flex items-center ${isConnected ? 'cursor-pointer hover:bg-opacity-70' : ''}`}
+    >
       <span className={`w-2 h-2 rounded-full mr-2 ${isConnected ? 'bg-green-400' : 'bg-red-500'}`}></span>
       {displayText}
+      {isConnected && (
+        <LogOut className="w-3 h-3 ml-2 text-white opacity-70 hover:opacity-100 z-1000" />
+      )}
     </div>
-  );
+  )
 };
 
-type TokenPower = { [key: string]: { vote: number, proposal: number, balance: number }}
 
-interface TokenDisplayProps {
-  vote: string;
-  proposal: string;
-  balance: string;
-}
-
-async function createTokenProps({walletAddress, tokenAddress}: {walletAddress: string, tokenAddress: DelegateToken}): Promise<TokenDisplayProps> {
-  console.log('--------------------------', tokenAddress)
-  if(walletAddress == null) return {vote: "", proposal: "", balance: ""};
-  let {vote, proposal} = await getDelegatee(tokenAddress, walletAddress);
-  const balance = await getBalance(tokenAddress, walletAddress);
-  vote = vote == zeroAddress ? "Not delegated" : vote;
-  proposal = proposal == zeroAddress ? "Not delegated" : proposal;
-  return {vote, proposal, balance};
+type TokenInfo = {
+  iconUrl: string
+  tokenName: string
+  buttonText: string
+  delegateToken: string
+  address: string
+  vote?: string
+  proposal?: string
+  balance?: string
 }
 
 export default function AppLayout() {
-  const [isCorrectChain, setIsCorrectChain] = useState(false);
-  const [address, setAddress] = useState<Address | null>(null);
-  const [ensName, setEnsName] = useState<string | null>(null);
-  const [publicClient, setPublicClient] = useState<PublicClient | null>(null);
+  const [isCorrectChain, setIsCorrectChain] = useState(false)
+  const [address, setAddress] = useState<Address | null>(null)
+  const [ensName, setEnsName] = useState<string | null>(null)
+  const [publicClient, setPublicClient] = useState<PublicClient | null>(null)
   const [wallet, setWallet] = useState<WalletClient | null>(null);
+  const [tokenDataWithBalances, setTokenDataWithBalances] = useState<TokenInfo[]>([])
 
-  useEffect(() => {
-    console.log('-----------------------------------------------------------------------')
-    if (!((window as any).ethereum)) return;
-
+  async function setupWallet() {
     const publicClient = createPublicClient({
       chain: mainnet,
       transport: http("https://eth-mainnet.g.alchemy.com/v2/AHvTHUHmlCKWoa5hezH-MTrKWw_MjtUZ")
-    });
-    setPublicClient(publicClient);
-
+    })
+    setPublicClient(publicClient)
     const wallet = createWalletClient({
       chain: mainnet,
       transport: custom((window as any).ethereum)
-    });
-    setWallet(wallet);
+    })
 
-    async function setupWallet() {
-      console.log('2')
-      try {
-        const chainId = await wallet.getChainId();
-        console.log("chainId", chainId);
-        if (chainId !== mainnet.id) {
-          await switchChain(wallet, { id: mainnet.id });
-        }
-
-        setIsCorrectChain(true);
-
-        const [account] = await wallet.requestAddresses();
-        setAddress(account);
-  
-        const name = await publicClient.getEnsName({ address: account });
-        setEnsName(name);
-      } catch (error) {
-        console.error("Error setting up wallet:", error);
-        setIsCorrectChain(false);
+    setWallet(wallet)
+    try {
+      const chainId = await wallet.getChainId()
+      if (chainId !== mainnet.id) {
+        await switchChain(wallet, { id: mainnet.id })
       }
+
+      setIsCorrectChain(true)
+
+      const [account] = await wallet.requestAddresses()
+      setAddress(account)
+
+      const name = await publicClient.getEnsName({ address: account })
+      setEnsName(name)
+    } catch (error) {
+      console.error("Error setting up wallet:", error)
+      setIsCorrectChain(false)
     }
-
-    setupWallet();
-  }, []);
-
-
-  const handleDelegate = async (token: DelegateToken) => {
-    console.log("handleDelegate:::: ");
-    console.log(token ? "👻" : "👻👻👻");
-    const hash = token ? await metaDelegate([token], wallet) : metaDelegateALL(wallet);
-    console.log(hash);
-    console.log("ownerAddress", address);
   }
 
+  useEffect(() => {
+    if (!((window as any).ethereum)) return
+    setupWallet()
+  }, [])
+
+
+  useEffect(() => {
+    if (!address || !publicClient) return
+
+    const fetchTokenData = async () => {
+      const updatedTokenData = await Promise.all(
+        tokenData.map(async (token) => {
+          if (token.address) {
+            const { vote, proposal } = await getDelegatee(token.address, address)
+            const balance = await getBalance(token.address, address)
+            return {
+              ...token,
+              vote: vote === zeroAddress ? "Not delegated" : vote,
+              proposal: proposal === zeroAddress ? "Not delegated" : proposal,
+              balance: formatEther(BigInt(balance))
+            }
+          }
+          return token
+        })
+      )
+      setTokenDataWithBalances(updatedTokenData)
+    }
+
+    fetchTokenData()
+  }, [address, publicClient])
+  
+
+  const disconnectWallet = async () => {
+    console.log("disconnecting wallet!!!!")
+    const provider = (window as any).ethereum
+    await provider.on("disconnect", () => {
+      console.log("???")
+    })
+    setAddress(null)
+    setEnsName(null)
+    setWallet(null)
+    // setPublicClient(null)
+  }
+
+  const handleDelegate = async (token: DelegateToken) => {
+    const hash = token ? await metaDelegate([token], wallet) :   await metaDelegateALL(wallet)
+    console.log(hash)
+    
+  }
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
@@ -351,7 +363,7 @@ export default function AppLayout() {
           backgroundImage: `url(${bgImageLink})`
         }}
       />
-      <AddressDisplay ensName={ensName} address={address} />
+      <AddressDisplay ensName={ensName} address={address} disconnectWallet={disconnectWallet} connectWallet={setupWallet} />
       <div className="relative z-10 flex items-center justify-center min-h-screen w-full p-4 md:p-0">
         <div className="container w-full md:w-[1153px] md:h-[510px] mb-[20px]">
           <div className="flex flex-col md:flex-row h-full">
@@ -359,20 +371,20 @@ export default function AppLayout() {
               <AboutUs />
             </div>
             <div className="w-full md:w-1/2 p-2 md:p-6">
-              <div className="h-full flex items-center justify-center">
+            <div className="h-full flex items-center justify-center">
               <div className="w-full md:w-[548px] flex flex-col justify-between space-y-4 md:space-y-0">
-                  {tokenData.map((token, index) => (
-                  //@ts-ignore
-                   address && (<Token 
+                {
+                  tokenDataWithBalances.map((token, index) => (
+                    <Token 
                       key={index} 
-                      info = {token} 
-                      prop = {createTokenProps({walletAddress: address, tokenAddress: token.address})}
-                      handleDelegate={async () => await handleDelegate(token.address)}
-                    />)
-                  ))}
-                </div>
+                      info={token} 
+                      handleDelegate={async () => await handleDelegate(token.address as DelegateToken)}
+                    />
+                  ))
+                }
               </div>
             </div>
+          </div>
           </div>
         </div>
       </div>
