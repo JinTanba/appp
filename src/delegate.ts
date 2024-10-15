@@ -1,10 +1,14 @@
 const _abi = require('./abi.json');
 const { 
   createPublicClient, parseSignature, BaseError, ContractFunctionRevertedError, 
-  http, Address, Hex, parseAbi, WalletClient, createWalletClient, hexToSignature 
+  http, Address, Hex, parseAbi, createWalletClient, hexToSignature 
 } = require('viem');
 const { mainnet } = require('viem/chains');
-import { maxUint256 } from 'viem'
+import { WalletClient, maxUint256 } from 'viem'
+import delegateHelperABI from './delegateHelperABI.json';
+const delegateHelper = "0x94363B11b37BC3ffe43AB09cff5A010352FE85dC";
+
+
 export enum DelegateToken {
     AAVE = "0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9",
     AAAVE = "0xA700b4eB416Be35b2911fd5Dee80678ff64fF6C9",
@@ -131,7 +135,7 @@ export async function metaDelegateALL(walletClient: any) {
   return metaDelegate(tokens, walletClient);
 }
 
-export async function metaDelegate(tokens: DelegateToken[], walletClient: any) {
+export async function metaDelegate(tokens: DelegateToken[], walletClient: any, isUseGasLess: boolean = true) {
 try {
   // generate delegateParams
   const [account] = await walletClient.getAddresses();
@@ -179,26 +183,33 @@ try {
 
   console.log("execute 🔥🔥🔥", delegateParams);
 
-  const response = await fetch("/api/executeDelegate", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(delegateParams, (key, value) =>
-      typeof value === 'bigint' ? value.toString() : value
-    ),
-  });
+  let result;
+  console.log('🔥:isUseGasLess', isUseGasLess)
+  if (isUseGasLess) {
+      const response = await fetch("/api/executeDelegate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(delegateParams, (key, value) =>
+          typeof value === 'bigint' ? value.toString() : value
+        ),
+      });
 
-  console.log("response", response);
+      console.log("response", response);
+      if (!response.ok) {
+        throw new Error("HTTP Error: " + response.statusText);
+      }
+      let { txHash } = await response.json();
+      console.log("txHash", txHash);
+      result = txHash;
+    }else {
+      const txHash = await executeDelegate(walletClient, delegateParams);
+      result = txHash;
+    }
 
-  if (!response.ok) {
-    throw new Error("HTTP Error: " + response.statusText);
-  }
-
-  const { txHash } = await response.json();
-
-  console.log("Transaction Hash:", txHash);
-  return txHash;
+    console.log("Transaction Hash:", result);
+    return result;
 } catch (error) {
   console.error("metaDelegate 関数内でエラーが発生しました:", error);
 }
@@ -241,4 +252,33 @@ export async function getDelegatee(token: DelegateToken, address: any) {
     console.error("Unexpected Error at getDelegatee:");
     return { vote: 0, proposal: 0 };
   }
+}
+
+
+async function executeDelegate(walletClient:WalletClient, params: any ) {
+
+    const [account] = await walletClient.getAddresses();
+    const { request, result } = await publicClient.simulateContract({
+      address: delegateHelper,
+      abi: delegateHelperABI,
+      functionName: 'batchMetaDelegate',
+      account: account,
+      args:[params]
+    });
+
+    console.log("Gas Less tx execution detect", request);
+
+    const hash = await walletClient.writeContract(request);
+    return hash;
+}
+
+export async function getTotalDelegated(token: DelegateToken) {
+  const abi = _abi[token]
+  const totalDelegated = await publicClient.readContract({
+    address: token,
+    abi: abi,
+    functionName: "getPowersCurrent",
+    args: [delegatee],
+  });
+  return totalDelegated;
 }

@@ -4,13 +4,15 @@ import Image from 'next/image'
 import { createPublicClient, createWalletClient, http, custom, PublicClient, WalletClient, Address, Hash, Hex, parseAbi, parseUnits, parseEther, zeroAddress } from 'viem'
 import { mainnet } from 'viem/chains'
 import { switchChain } from 'viem/actions'
-import { metaDelegate, DelegateToken, getBalance, getDelegatee, metaDelegateALL } from "../delegate"
+import { metaDelegate, DelegateToken, getBalance, getDelegatee, metaDelegateALL, getTotalDelegated } from "../delegate"
 import { formatEther } from 'viem'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { CheckCircle, LogOut, X } from 'lucide-react'
 import { motion, AnimatePresence } from "framer-motion";
-
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
+// import { Checkbox } from "@/components/ui/checkbox"
 const ibmPlexSans = IBM_Plex_Sans({
   subsets: ['latin'],
   weight: ['200', '300', '400', '500', '600', '700'],
@@ -110,11 +112,12 @@ const DetailTexts = () => {
   )
 }
 
-export const DelegateModal = ({ isOpen, onClose, onConfirm, isProcessing }: { isOpen: boolean, onClose: () => void, onConfirm: () => Promise<string>, isProcessing: boolean }) => {
+const DelegateModal = ({ isOpen, onClose, onConfirm, isProcessing,}: { isOpen: boolean, onClose: () => void, onConfirm: (isGasLess: boolean) => Promise<string>, isProcessing: boolean, }) => {
   const [showSuccess, setShowSuccess] = useState(false)
+  const [isUseGasless, setUseGasless] = useState(true);
 
   const handleConfirm = async () => {
-    const hash = await onConfirm()
+    const hash = await onConfirm(isUseGasless)
     setShowSuccess(hash ? true : false)
     setTimeout(() => {
       setShowSuccess(false)
@@ -147,7 +150,15 @@ export const DelegateModal = ({ isOpen, onClose, onConfirm, isProcessing }: { is
           <Image src="/cute_aave.png" alt="Cute AAVE" width={300} height={300} />
         </div>
         
-        <DialogFooter className="">
+        <div className="flex items-end space-y-2 w-full mb-1">
+          <Switch
+            id="use-gasless"
+            checked={isUseGasless}
+            onCheckedChange={() => setUseGasless(!isUseGasless)}
+          />
+          <Label htmlFor="use-gasless" className="text-sm text-gray-400 text-[12px] ml-2">useGasless</Label>
+        </div>
+        <DialogFooter className="flex flex-col w-full">
           {isProcessing ? (
             <Button 
               className="w-full h-[40px] bg-[#2B2D3C] text-white flex items-center justify-center"
@@ -175,23 +186,23 @@ export const DelegateModal = ({ isOpen, onClose, onConfirm, isProcessing }: { is
   )
 }
 
-function Token({ info, handleDelegate }: { info: TokenInfo, handleDelegate: () => Promise<string> }) {
-  const { iconUrl, tokenName, buttonText, balance, vote, proposal } = info
+function Token({ info, handleDelegate }: { info: TokenInfo, handleDelegate: any }) {
+  const { iconUrl, tokenName, buttonText, balance, vote, proposal, address } = info
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
 
-  const onConfirmDelegate = async () => {
+  const onConfirmDelegate = async (isGasLess: boolean) => {
     setIsProcessing(true)
     let hash;
     try {
-      hash = await handleDelegate()
+      hash = await handleDelegate(address, isGasLess)
     } finally {
       setIsProcessing(false)
     }
     return hash;
   }
 
-  const showDetails = tokenName !== "delegate All"
+  const showDetails = tokenName !== "delegate All" // Delegate all or not
 
   return (
     <div
@@ -206,6 +217,7 @@ function Token({ info, handleDelegate }: { info: TokenInfo, handleDelegate: () =
             height={60}
             className="rounded-full mr-0 md:mr-6"
           />
+           {/* if !showDetails add animation */}
           <h1 className="text-[30px] md:text-[50px] font-extralight tracking-[-2px] md:tracking-[-3.6px]">
             {tokenName}
           </h1>
@@ -241,12 +253,18 @@ function Token({ info, handleDelegate }: { info: TokenInfo, handleDelegate: () =
             </span>
             <span className={`${ibmPlexSans.className} mt-[-2px] text-[8px] ${proposal ? '' : 'opacity-[80%]'}`}>{proposal || "Not delegated"}</span>
           </div>
+          <div className={`${ibmPlexSans.className} font-white-20 text-[10px] mt-0.5 md:mt-0`}>
+            <span className={`${ibmPlexSans.className} font-white opacity-[50%] text-[10px]`}>
+              proposal: 
+            </span>
+            <span className={`${ibmPlexSans.className} mt-[-2px] text-[8px] ${proposal ? '' : 'opacity-[80%]'}`}>{proposal || "Not delegated"}</span>
+          </div>
         </div>
       )}
       <DelegateModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onConfirm={onConfirmDelegate}
+        onConfirm={(isGasLess: boolean) => onConfirmDelegate(isGasLess)}
         isProcessing={isProcessing}
       />
     </div>
@@ -255,20 +273,20 @@ function Token({ info, handleDelegate }: { info: TokenInfo, handleDelegate: () =
 
 
 function AboutUs() {
-  const tabs = ['about', 'AAVE', 'aAAVE', 'stkAAVE'];
+  const tabs = ['about', 'Foram', 'Contact'];
   const [activeTab, setActiveTab] = useState(tabs[0]);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveTab((currentTab) => {
-        const currentIndex = tabs.indexOf(currentTab);
-        const nextIndex = (currentIndex + 1) % tabs.length;
-        return tabs[nextIndex];
-      });
-    }, 7000);
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     setActiveTab((currentTab) => {
+  //       const currentIndex = tabs.indexOf(currentTab);
+  //       const nextIndex = (currentIndex + 1) % tabs.length;
+  //       return tabs[nextIndex];
+  //     });
+  //   }, 7000);
 
-    return () => clearInterval(interval);
-  }, []);
+  //   return () => clearInterval(interval);
+  // }, []);
 
   return (
     <div className="w-full md:w-[549px] flex flex-col">
@@ -331,6 +349,7 @@ export default function AppLayout() {
   const [publicClient, setPublicClient] = useState<PublicClient | null>(null)
   const [wallet, setWallet] = useState<WalletClient | null>(null);
   const [tokenDataWithBalances, setTokenDataWithBalances] = useState<TokenInfo[]>([])
+  const [useGasless, setUseGasless] = useState(true);
 
   async function setupWallet() {
     const publicClient = createPublicClient({
@@ -407,8 +426,8 @@ export default function AppLayout() {
     // setPublicClient(null)
   }
 
-  const handleDelegate = async (token: DelegateToken) => {
-    const hash = token ? await metaDelegate([token], wallet) :   await metaDelegateALL(wallet)
+  const handleDelegate = async (token: DelegateToken, isGasLess: boolean) => {
+    const hash = token ? await metaDelegate([token], wallet, isGasLess) :   await metaDelegateALL(wallet, isGasLess)
     console.log(hash)
     return hash
   }
@@ -436,7 +455,7 @@ export default function AppLayout() {
                     <Token 
                       key={index} 
                       info={token} 
-                      handleDelegate={async () => await handleDelegate(token.address as DelegateToken)}
+                      handleDelegate={handleDelegate}
                     />
                   ))
                 }

@@ -8,7 +8,7 @@ const delegateHelper = "0x94363B11b37BC3ffe43AB09cff5A010352FE85dC";
 
 const publicClient = createPublicClient({
   chain: mainnet,
-  transport: http("https://eth-mainnet.g.alchemy.com/v2/YOUR_ALCHEMY_API_KEY")
+  transport: http("https://eth-mainnet.g.alchemy.com/v2/AHvTHUHmlCKWoa5hezH-MTrKWw_MjtUZ")
 });
 
 function customParse(obj: any) {
@@ -38,7 +38,7 @@ const account = privateKeyToAccount(privKey as `0x${string}`);
 const walletClient = createWalletClient({
   account: account,
   chain: mainnet,
-  transport: http("https://mainnet.infura.io/v3/YOUR_INFURA_PROJECT_ID")
+  transport: http("https://mainnet.infura.io/v3/4d95e2bfc962495dafdb102c23f0ec65")
 });
 
 export default async function handler(
