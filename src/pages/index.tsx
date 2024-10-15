@@ -230,8 +230,8 @@ function Token({ info, handleDelegate, sumDelegated }: { info: TokenInfo, handle
                 <Image
                   src={iconUrl}
                   alt={`${tokenName} Logo`}
-                  width={80}
-                  height={80}
+                  width={tokenName === "delegate All" ? 85 : 60}
+                  height={tokenName === "delegate All" ? 85 : 60}
                   className="rounded-full mr-0 md:mr-6"
                 />
               </motion.div>
