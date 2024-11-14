@@ -313,22 +313,14 @@ interface Tab {
 }
 
 function AboutUs() {
-  // const tabs: Tab[] = ['about', 'forum', "twitter", "hey"];
-  const tabs: Tab[] = [{name: "about", link: "https://saucyblock.eth"}, {name: "forum", link: "https://governance.aave.com/t/saucy-block-delegate-platform/16115"}, {name: "twitter", link: "https://x.com/saucy_block"}, {name: "hey", link: "https://hey.xyz/u/saucy_block"}];
+  const tabs: Tab[] = [
+    {name: "about", link: "hhttps://governance.aave.com/t/saucy-block-delegate-platform/16115"}, 
+    {name: "forum", link: " https://governance.aave.com/u/saucyblock/summary"}, 
+    {name: "twitter", link: "https://x.com/saucy_block"}, 
+    {name: "hey", link: "https://hey.xyz/u/saucy_block"}
+  ];
 
   const [activeTab, setActiveTab] = useState(tabs[0]);
-
-  // useEffect(() => {
-    //   const interval = setInterval(() => {
-      //     setActiveTab((currentTab) => {
-        //       const currentIndex = tabs.indexOf(currentTab);
-        //       const nextIndex = (currentIndex + 1) % tabs.length;
-        //       return tabs[nextIndex];
-      //     });
-    //   }, 7000);
-
-    //   return () => clearInterval(interval);
-  // }, []);
 
   return (
     <div className="w-full md:w-[549px] flex flex-col">
