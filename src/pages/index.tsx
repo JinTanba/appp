@@ -23,7 +23,7 @@ const bgImageLink = "https://firebasestorage.googleapis.com/v0/b/ucai-d6677.apps
 const tokenData: any[] = [
   {
     iconUrl: "/cute_aave2.png",
-    tokenName: "delegate All",
+    tokenName: "All Token",
     buttonText: "delegate all",
     delegateToken: "",
     address: ""
@@ -202,7 +202,7 @@ function Token({ info, handleDelegate, sumDelegated }: { info: TokenInfo, handle
     return hash;
   }
 
-  const showDetails = tokenName !== "delegate All";
+  const showDetails = tokenName !== "All Token";
   
   const imageAnimation = {
     animate: {
@@ -217,12 +217,12 @@ function Token({ info, handleDelegate, sumDelegated }: { info: TokenInfo, handle
   };
   return (
     <div
-      className={`text-white p-4 md:p-6 rounded-2xl w-full md:w-[560px] flex flex-col justify-between ${ibmPlexSans.className}`}
+      className={`text-white p-4 md:p-6 pb-1 rounded-2xl w-full md:w-[560px] flex flex-col justify-between ${ibmPlexSans.className}`}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center">
           <AnimatePresence>
-            {tokenName === "delegate All" ? (
+            {tokenName === "All Token" ? (
               <motion.div
                 variants={imageAnimation}
                 animate="animate"
@@ -230,8 +230,8 @@ function Token({ info, handleDelegate, sumDelegated }: { info: TokenInfo, handle
                 <Image
                   src={iconUrl}
                   alt={`${tokenName} Logo`}
-                  width={tokenName === "delegate All" ? 85 : 60}
-                  height={tokenName === "delegate All" ? 85 : 60}
+                  width={tokenName === "All Token" ? 90 : 60}
+                  height={tokenName === "All Token" ? 90 : 60}
                   className="rounded-full mr-0 md:mr-6"
                 />
               </motion.div>
@@ -251,7 +251,7 @@ function Token({ info, handleDelegate, sumDelegated }: { info: TokenInfo, handle
         </div>
         <button
           onClick={() => setIsModalOpen(true)}
-          className="w-[120px] md:w-[147px] h-[35px] md:h-[45px] rounded-[15px] bg-[rgba(22,22,22,0.20)] flex items-center justify-center"
+          className="w-[100px] md:w-[127px] h-[35px] md:h-[45px] rounded-[15px] bg-[rgba(22,22,22,0.20)] flex items-center justify-center"
         >
           <span className="h-[33px] flex items-center opacity-[70%] text-white text-[10px] md:text-[12px] font-light">
             {buttonText}
@@ -261,9 +261,9 @@ function Token({ info, handleDelegate, sumDelegated }: { info: TokenInfo, handle
       {!showDetails ? ( 
         <div className={`${ibmPlexSans.className} font-white-20 text-[10px] mt-0.5 md:mt-0`}>
           <span className={`${ibmPlexSans.className} font-white opacity-[50%] text-[10px]`}>
-            sumDelegated: 
+            total delegated:
           </span>
-          <span className={`${ibmPlexSans.className} mt-[-2px] text-[8px] ${proposal ? '' : 'opacity-[80%]'}`}>{sumDelegated}</span>
+          <span className={`${ibmPlexSans.className} mt-[-2px] text-white font-extralight text-[25px] ${proposal ? '' : 'opacity-[80%]'}`}>{sumDelegated}</span>
         </div>
       ) : (
         <div className="flex flex-row text-left mt-2 md:mt-0 space-x-8">
@@ -307,20 +307,27 @@ function Token({ info, handleDelegate, sumDelegated }: { info: TokenInfo, handle
   );
 }
 
+interface Tab {
+  name: string,
+  link: string
+}
+
 function AboutUs() {
-  const tabs = ['about', 'forum',];
+  // const tabs: Tab[] = ['about', 'forum', "twitter", "hey"];
+  const tabs: Tab[] = [{name: "about", link: "https://saucyblock.eth"}, {name: "forum", link: "https://governance.aave.com/t/saucy-block-delegate-platform/16115"}, {name: "twitter", link: "https://x.com/saucy_block"}, {name: "hey", link: "https://hey.xyz/u/saucy_block"}];
+
   const [activeTab, setActiveTab] = useState(tabs[0]);
 
   // useEffect(() => {
-  //   const interval = setInterval(() => {
-  //     setActiveTab((currentTab) => {
-  //       const currentIndex = tabs.indexOf(currentTab);
-  //       const nextIndex = (currentIndex + 1) % tabs.length;
-  //       return tabs[nextIndex];
-  //     });
-  //   }, 7000);
+    //   const interval = setInterval(() => {
+      //     setActiveTab((currentTab) => {
+        //       const currentIndex = tabs.indexOf(currentTab);
+        //       const nextIndex = (currentIndex + 1) % tabs.length;
+        //       return tabs[nextIndex];
+      //     });
+    //   }, 7000);
 
-  //   return () => clearInterval(interval);
+    //   return () => clearInterval(interval);
   // }, []);
 
   return (
@@ -328,14 +335,14 @@ function AboutUs() {
       <div className="w-full md:w-[100px] h-[40px] flex justify-between items-center mb-2 overflow-x-auto md:overflow-x-visible">
         {tabs.map((tab) => (
           <TabButton
-            key={tab}
-            label={tab}
+            key={tab.name}
+            label={tab.name}
             isActive={activeTab === tab}
-            onClick={() => window.open(tab === 'forum' ? 'https://governance.aave.com/t/saucy-block-delegate-platform/16115' : 'https://aave.com/', '_blank')}
+            onClick={() => window.open(tab.link, '_blank')}
           />
         ))}
       </div>
-      <Title activeTab={activeTab} />
+      <Title activeTab={activeTab.name} />
       <DetailTexts />
     </div>
   );
@@ -343,7 +350,7 @@ function AboutUs() {
 
 
 const AddressDisplay = ({ ensName, address, disconnectWallet, connectWallet }: { ensName: string | null, address: string | null, disconnectWallet: () => void, connectWallet: () => void }) => {
-  const displayText = ensName || (address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Not Connected');
+  const displayText = ensName || (address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Connect wallet');
   const isConnected = Boolean(ensName || address);
 
   const handleClick = async () => {
@@ -513,3 +520,4 @@ export default function AppLayout() {
     </div>
   )
 }
+
